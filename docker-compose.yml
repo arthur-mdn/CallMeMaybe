@@ -21,3 +21,12 @@ services:
       - "traefik.http.services.call-server.loadbalancer.server.port=3003"
       - "traefik.http.routers.call-server.entrypoints=websecure"
       - "traefik.http.routers.call-server.tls.certresolver=myresolver"
+
+  call-mongo:
+    image: mongo:latest
+    volumes:
+      - call-mongo-data:/data/db
+
+volumes:
+  call-mongo-data:
+    driver: local
