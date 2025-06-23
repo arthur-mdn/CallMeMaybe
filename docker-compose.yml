@@ -2,7 +2,7 @@ services:
   web:
     build: ./client
     volumes:
-      - .:/app
+      - ./client:/app
       - /app/node_modules
     labels:
       - "traefik.enable=true"
