@@ -8,7 +8,8 @@ window.onload = async () => {
       callBtn = document.querySelector("#callBtn"),
       chatInput = document.querySelector("#chatInput"),
       connection = document.querySelector("#connection"),
-      connectBtn = document.querySelector("#connectBtn");
+      connectBtn = document.querySelector("#connectBtn"),
+      sendBtn = document.querySelector("#sendBtn"); // Added sendBtn
 
   let mediaRecorder;
   let recordedChunks = [];
@@ -84,6 +85,7 @@ window.onload = async () => {
       connection.style.display = "none";
       connectBtn.style.display = "none";
       chatInput.style.visibility = "visible";
+      sendBtn.style.display = "block"; // Show send button
       callBtn.style.display = "block";
 
       const endCall = function (e) {
@@ -125,6 +127,7 @@ window.onload = async () => {
         connection.style.display = "block";
         connectBtn.style.display = "block";
         chatInput.style.visibility = "collapse";
+        sendBtn.style.display = "none"; // Hide send button
         callBtn.style.display = "none";
         if (mediaRecorder && mediaRecorder.state === "recording") {
           mediaRecorder.stop();
@@ -136,6 +139,7 @@ window.onload = async () => {
         connection.style.display = "block";
         connectBtn.style.display = "block";
         chatInput.style.visibility = "collapse";
+        sendBtn.style.display = "none"; // Hide send button
         callBtn.style.display = "none";
         console.log(e);
         if (mediaRecorder && mediaRecorder.state === "recording") {
@@ -143,18 +147,24 @@ window.onload = async () => {
         }
       })
 
+      const sendMessage = () => {
+        if (!chatInput.value) return;
+        conn.send(chatInput.value)
+        const msg = document.createElement("li");
+        msg.innerHTML = 'You: ' + chatInput.value;
+        chat.appendChild(msg);
+        chatInput.value = "";
+        chat.scrollTop = chat.scrollHeight;
+      };
+
       chatInput.addEventListener("keypress", function (event) {
         if (event.key === "Enter") {
           event.preventDefault();
-          if (!chatInput.value) return;
-          conn.send(chatInput.value)
-          const msg = document.createElement("li");
-          msg.innerHTML = 'You: ' + chatInput.value;
-          chat.appendChild(msg);
-          chatInput.value = "";
-          chat.scrollTop = chat.scrollHeight;
+          sendMessage();
         }
       });
+
+      sendBtn.addEventListener("click", sendMessage); // Event listener for send button
     }
 
     function connectToPeer() {

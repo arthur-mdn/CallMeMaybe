@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Peer calls</title>
-    <!-- Google Fonts - Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom styles to ensure Inter font is applied globally */
@@ -42,17 +40,22 @@
         </button>
     </div>
 
-    <input id="chatInput" placeholder="Message" type="text"
-           class="mb-4 px-3 py-2 w-full bg-transparent border border-gray-600 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-200">
+    <div class="flex mb-4">
+        <input id="chatInput" placeholder="Message" type="text"
+               class="flex-1 mr-2 px-3 py-2 bg-transparent border border-gray-600 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-200">
+        <button id="sendBtn"
+                class="px-4 py-2 bg-gray-700 text-gray-200 border border-gray-600 rounded-md cursor-pointer hover:bg-gray-600 transition-colors duration-200">
+            Envoyer
+        </button>
+    </div>
+
 
     <div id="chat" class="w-full h-80 border border-gray-600 rounded-md p-3 overflow-y-auto bg-gray-900 text-gray-300">
-        <!-- Chat messages will appear here -->
     </div>
 </div>
 
 <video id="video" class="hidden mt-4 w-full max-w-sm rounded-lg shadow-lg" controls autoplay></video>
 
-<!-- Inclusion de PeerJS via CDN -->
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="app.js"></script>
 </body>
