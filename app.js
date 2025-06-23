@@ -8,27 +8,37 @@ window.onload = async () => {
       callBtn = document.querySelector("#callBtn"),
       chatInput = document.querySelector("#chatInput"),
       connection = document.querySelector("#connection"),
-      connectBtn = document.querySelector("#connectBtn"); // Ajout de cette ligne
+      connectBtn = document.querySelector("#connectBtn");
 
   let mediaRecorder;
   let recordedChunks = [];
 
   function setupCombinedRecording(localStream, remoteStream) {
-    // Créer un contexte audio pour mixer les flux
     const audioContext = new AudioContext();
     const destination = audioContext.createMediaStreamDestination();
 
-    // Connecter le flux audio local (votre voix)
-    const localSource = audioContext.createMediaStreamSource(localStream);
-    localSource.connect(destination);
+    if (localStream.getAudioTracks().length > 0) {
+      const localSource = audioContext.createMediaStreamSource(localStream);
+      localSource.connect(destination);
+    }
 
-    // Connecter le flux audio distant (voix de l'interlocuteur)
-    const remoteSource = audioContext.createMediaStreamSource(remoteStream);
-    remoteSource.connect(destination);
+    if (remoteStream.getAudioTracks().length > 0) {
+      const remoteSource = audioContext.createMediaStreamSource(remoteStream);
+      remoteSource.connect(destination);
+    }
 
-    // Créer l'enregistreur avec le flux combiné
     recordedChunks = [];
-    mediaRecorder = new MediaRecorder(destination.stream);
+
+    // MODIFICATION 1 : Spécifier le débit binaire audio (audioBitsPerSecond)
+    // 64000 = 64 kbps (bon équilibre pour la voix)
+    // Pour des fichiers encore plus petits, vous pouvez essayer 32000 (32 kbps)
+    const options = {
+      mimeType: 'audio/webm;codecs=opus', // Opus est très efficace pour la voix
+      audioBitsPerSecond: 32000
+    };
+
+    mediaRecorder = new MediaRecorder(destination.stream, options);
+
     mediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
         recordedChunks.push(event.data);
@@ -48,8 +58,16 @@ window.onload = async () => {
     mediaRecorder.start();
   }
 
-  const audio = await navigator.mediaDevices.getUserMedia({ video: false, audio: true })
-  console.log(audio)
+  // MODIFICATION 2 : Ajouter des contraintes pour un audio plus léger à la source
+  const audioConstraints = {
+    video: false,
+    audio: {
+      sampleRate: 16000, // Fréquence d'échantillonnage pour la voix
+      channelCount: 1     // Audio en mono
+    }
+  };
+
+  const audio = await navigator.mediaDevices.getUserMedia(audioConstraints);
   const response = await fetch("https://fulldroper.metered.live/api/v1/turn/credentials?apiKey=20b057434f2dba67cce42dbf43a66658ba5d");
   const servers = await response.json()
   const peer = new Peer({
@@ -64,7 +82,7 @@ window.onload = async () => {
     const chatHandler = function (conn) {
       status.innerHTML = "Connected to remote";
       connection.style.display = "none";
-      connectBtn.style.display = "none"; // Masquer aussi le bouton
+      connectBtn.style.display = "none";
       chatInput.style.visibility = "visible";
       callBtn.style.display = "block";
 
@@ -74,8 +92,6 @@ window.onload = async () => {
         console.log(e)
         callBtn.onclick = makeCall;
         call?.close();
-
-        // Stop recording and download
         if (mediaRecorder && mediaRecorder.state === "recording") {
           mediaRecorder.stop();
         }
@@ -88,10 +104,7 @@ window.onload = async () => {
           status.innerHTML = "Connected to voice";
           video.srcObject = stream;
           video.play();
-
-          // Utiliser la fonction pour combiner les flux audio
           setupCombinedRecording(audio, stream);
-
           callBtn.onclick = endCall;
           call.on('close', endCall);
           call.on('error', endCall);
@@ -110,10 +123,9 @@ window.onload = async () => {
       conn.on('close', function () {
         status.innerHTML = "Disconnected from remote";
         connection.style.display = "block";
-        connectBtn.style.display = "block"; // Afficher le bouton
+        connectBtn.style.display = "block";
         chatInput.style.visibility = "collapse";
         callBtn.style.display = "none";
-        // Ensure recording stops if connection closes unexpectedly
         if (mediaRecorder && mediaRecorder.state === "recording") {
           mediaRecorder.stop();
         }
@@ -122,11 +134,10 @@ window.onload = async () => {
       conn.on('error', function (e) {
         status.innerHTML = "Disconnected from remote with error";
         connection.style.display = "block";
-        connectBtn.style.display = "block"; // Afficher le bouton
+        connectBtn.style.display = "block";
         chatInput.style.visibility = "collapse";
         callBtn.style.display = "none";
         console.log(e);
-        // Ensure recording stops if error occurs
         if (mediaRecorder && mediaRecorder.state === "recording") {
           mediaRecorder.stop();
         }
@@ -146,7 +157,6 @@ window.onload = async () => {
       });
     }
 
-    // Fonction réutilisable pour se connecter
     function connectToPeer() {
       if (!connection.value) return;
       const c = peer.connect(connection.value.trim())
@@ -155,7 +165,6 @@ window.onload = async () => {
       connection.style.display = "none";
     }
 
-    // Gestion de la touche Entrée
     connection.addEventListener("keypress", function (e) {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -163,7 +172,6 @@ window.onload = async () => {
       }
     });
 
-    // Gestion du clic sur le bouton
     connectBtn.addEventListener("click", function() {
       connectToPeer();
     });
@@ -185,10 +193,7 @@ window.onload = async () => {
         callBtn.innerHTML = "End call";
         video.srcObject = stream;
         video.play();
-
-        // Utiliser la fonction pour combiner les flux audio
         setupCombinedRecording(audio, stream);
-
         callBtn.onclick = endCall;
         call.on('close', endCall);
         call.on('error', endCall);
@@ -200,7 +205,6 @@ window.onload = async () => {
         callBtn.onclick = makeCall;
         console.log(e)
         call?.close();
-        // Stop recording for incoming call and download
         if (mediaRecorder && mediaRecorder.state === "recording") {
           mediaRecorder.stop();
         }
@@ -212,7 +216,6 @@ window.onload = async () => {
         call.on('stream', function (stream) {
           video.srcObject = stream;
           video.play();
-
           callBtn.onclick = endCall;
           call.on('close', endCall);
           call.on('error', endCall);
