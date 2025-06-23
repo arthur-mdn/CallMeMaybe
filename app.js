@@ -7,7 +7,8 @@ window.onload = async () => {
       peerId = document.querySelector("#peerId"),
       callBtn = document.querySelector("#callBtn"),
       chatInput = document.querySelector("#chatInput"),
-      connection = document.querySelector("#connection");
+      connection = document.querySelector("#connection"),
+      connectBtn = document.querySelector("#connectBtn"); // Ajout de cette ligne
 
   let mediaRecorder;
   let recordedChunks = [];
@@ -63,6 +64,7 @@ window.onload = async () => {
     const chatHandler = function (conn) {
       status.innerHTML = "Connected to remote";
       connection.style.display = "none";
+      connectBtn.style.display = "none"; // Masquer aussi le bouton
       chatInput.style.visibility = "visible";
       callBtn.style.display = "block";
 
@@ -108,6 +110,7 @@ window.onload = async () => {
       conn.on('close', function () {
         status.innerHTML = "Disconnected from remote";
         connection.style.display = "block";
+        connectBtn.style.display = "block"; // Afficher le bouton
         chatInput.style.visibility = "collapse";
         callBtn.style.display = "none";
         // Ensure recording stops if connection closes unexpectedly
@@ -119,6 +122,7 @@ window.onload = async () => {
       conn.on('error', function (e) {
         status.innerHTML = "Disconnected from remote with error";
         connection.style.display = "block";
+        connectBtn.style.display = "block"; // Afficher le bouton
         chatInput.style.visibility = "collapse";
         callBtn.style.display = "none";
         console.log(e);
@@ -142,15 +146,26 @@ window.onload = async () => {
       });
     }
 
+    // Fonction réutilisable pour se connecter
+    function connectToPeer() {
+      if (!connection.value) return;
+      const c = peer.connect(connection.value.trim())
+      c.on('open', () => chatHandler(c))
+      connection.value = "";
+      connection.style.display = "none";
+    }
+
+    // Gestion de la touche Entrée
     connection.addEventListener("keypress", function (e) {
       if (e.key === "Enter") {
         e.preventDefault();
-        if (!connection.value) return;
-        const c = peer.connect(connection.value.trim())
-        c.on('open', () => chatHandler(c))
-        connection.value = "";
-        connection.style.visibility = "collapsed";
+        connectToPeer();
       }
+    });
+
+    // Gestion du clic sur le bouton
+    connectBtn.addEventListener("click", function() {
+      connectToPeer();
     });
 
     peer.on('connection', c => c.on('open', () => chatHandler(c)))
