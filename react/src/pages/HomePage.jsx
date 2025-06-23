@@ -6,7 +6,7 @@ export default function HomePage() {
 
     const createCallRoom = () => {
         const callId = uuidv4()
-        navigate(`/${callId}`)
+        navigate(`/${callId}`, { state: { isCreator: true } })
     }
 
     return (
