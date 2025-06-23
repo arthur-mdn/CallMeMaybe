@@ -3,47 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peer call`s</title>
+    <title>Peer calls</title>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            color: #acacac;
-        }
-
+        /* Custom styles to ensure Inter font is applied globally */
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            flex-direction: column;
-            background-color: #181a1b;
+            font-family: 'Inter', sans-serif;
         }
-
-        input {
-            width: calc(100% - 10px);
-            background-color: #0000;
-            padding: 4px;
-            border: 1px solid;
-            border-radius: 4px;
-            outline: none;
+        /* Override Tailwind's default outline for inputs on focus if desired, or let Tailwind handle it */
+        input:focus {
+            outline: none; /* Tailwind's default focus ring is usually good */
+        }
+        /* Hide scrollbar for the chat div but allow scrolling */
+        #chat::-webkit-scrollbar {
+            display: none; /* For Chrome, Safari, and Opera */
+        }
+        #chat {
+            -ms-overflow-style: none;  /* For IE and Edge */
+            scrollbar-width: none;  /* For Firefox */
         }
     </style>
 </head>
-<body>
-    <div style="width: 320px;">
-        <h3 style="text-align: center; margin-bottom: 10px;" id="status">Offline</h3>
-        <p style="margin-bottom: 10px;">ID: <a id="peerId">none</a></p>
-        <p id="callBtn" style="display: none;margin-bottom: 10px;text-align: center;border: 1px solid;padding: 4px;border-radius: 4px;" >Voice Call</p>
-        <div style="display: flex; margin-bottom: 10px;">
-            <input style="flex: 1; margin-right: 5px;" id="connection" placeholder="Another client id" type="text">
-            <button id="connectBtn" style="padding: 0 10px; background: #333; border: 1px solid #acacac; border-radius: 4px; cursor: pointer;">Connect</button>
-        </div>        <input style="margin-bottom: 10px;" id="chatInput" placeholder="Message" type="text">
-        <div style="width: 100%; height: 320px; border: 1px solid; border-radius: 4px; overflow-y: scroll;" id="chat"></div>
-    </div>
-    <video id="video" style="display: none;" controls autoplay></video>
+<body class="flex flex-col items-center justify-center h-screen bg-gray-900 text-gray-400">
+<div class="w-100 p-4 bg-gray-800 rounded-lg shadow-lg">
+    <h3 id="status" class="text-center mb-4 text-xl font-semibold text-gray-200">Offline</h3>
+    <p class="mb-4">ID: <a id="peerId" class="text-blue-400 font-medium">none</a></p>
+    <p id="callBtn" class="hidden mb-4 text-center border border-gray-600 p-2 rounded-md cursor-pointer hover:bg-gray-700 transition-colors duration-200">Voice Call</p>
 
-    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-    <script src="app.js"></script>
+    <div class="flex mb-4">
+        <input id="connection" placeholder="Another client id" type="text"
+               class="flex-1 mr-2 px-3 py-2 bg-transparent border border-gray-600 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-200">
+        <button id="connectBtn"
+                class="px-4 py-2 bg-gray-700 text-gray-200 border border-gray-600 rounded-md cursor-pointer hover:bg-gray-600 transition-colors duration-200">
+            Connect
+        </button>
+    </div>
+
+    <input id="chatInput" placeholder="Message" type="text"
+           class="mb-4 px-3 py-2 w-full bg-transparent border border-gray-600 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-200">
+
+    <div id="chat" class="w-full h-80 border border-gray-600 rounded-md p-3 overflow-y-auto bg-gray-900 text-gray-300">
+        <!-- Chat messages will appear here -->
+    </div>
+</div>
+
+<video id="video" class="hidden mt-4 w-full max-w-sm rounded-lg shadow-lg" controls autoplay></video>
+
+<!-- Inclusion de PeerJS via CDN -->
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
