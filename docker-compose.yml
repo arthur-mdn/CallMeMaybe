@@ -1,12 +1,23 @@
 services:
-  web:
-    build: ./client
+  call-react:
+    build: ./react
     volumes:
-      - ./client:/app
+      - ./react:/app
       - /app/node_modules
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.web.rule=Host(`call.mds.mondon.pro`)"
-      - "traefik.http.services.web.loadbalancer.server.port=3000"
-      - "traefik.http.routers.web.entrypoints=websecure"
-      - "traefik.http.routers.web.tls.certresolver=myresolver"
+      - "traefik.http.routers.call-react.rule=Host(`call.mds.mondon.pro`)"
+      - "traefik.http.routers.call-react.entrypoints=websecure"
+      - "traefik.http.routers.call-react.tls.certresolver=myresolver"
+
+  call-server:
+    build: ./server
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.call-server.rule=Host(`api.call.mds.mondon.pro`)"
+      - "traefik.http.services.call-server.loadbalancer.server.port=3003"
+      - "traefik.http.routers.call-server.entrypoints=websecure"
+      - "traefik.http.routers.call-server.tls.certresolver=myresolver"
