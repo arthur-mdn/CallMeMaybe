@@ -112,10 +112,17 @@ export default function CallPage() {
             }
         }
 
+        pc.oniceconnectionstatechange = () =>
+            console.log('🔥 ICE connection state:', pc.iceConnectionState)
+
+        pc.onconnectionstatechange = () =>
+            console.log('🔗 Peer connection state:', pc.connectionState)
+
         // 6) réception du flux → audio
-        pc.ontrack = ({ streams: [remoteStream] }) => {
+        pc.ontrack = async ({streams: [remoteStream]}) => {
             remoteAudioRef.current.srcObject = remoteStream
-            remoteAudioRef.current.play().catch(() => {})
+            await remoteAudioRef.current.play().catch(() => {
+            })
 
             // Dès que le remoteStream arrive, on démarre l’enregistrement
             setupCombinedRecording(stream, remoteStream)
