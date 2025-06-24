@@ -11,7 +11,6 @@ export default function CallPage() {
     const [hasJoined, setHasJoined] = useState(false)
     const [participants, setParticipants] = useState([])
     const [localStream, setLocalStream] = useState(null)
-    const remoteStreamRef = useRef(new MediaStream())
 
     const localAudioRef = useRef(null)
     const remoteAudioRef = useRef(null)
@@ -79,7 +78,13 @@ export default function CallPage() {
 
         // 1) Listen BEFORE join-call
         socket.off()
-        socket.on('participants-update', setParticipants)
+        socket.on('participants-update', participantsList => {
+            console.log('Participants mis à jour :', participantsList)
+            setParticipants(Array.isArray(participantsList)
+                ? participantsList
+                : participantsList.participants
+            )
+        })
         socket.on('signal', ({ data }) => handleSignal(data))
         socket.on('user-joined', ({ initiator }) => initiator && createAndSendOffer())
         socket.on('hangup', () => {
@@ -98,9 +103,9 @@ export default function CallPage() {
 
         // 4) Précharger un MediaStream vide et forcer volume/muted DANS LE CLIC
         const remoteEl = remoteAudioRef.current
-        remoteEl.srcObject = remoteStreamRef.current
-        remoteEl.muted    = false
-        remoteEl.volume   = 1
+        remoteEl.srcObject = new MediaStream()
+        remoteEl.muted = false
+        remoteEl.volume = 1
         await remoteEl.play().catch(() => {})
 
         // 5) Créer la RTCPeerConnection
@@ -127,12 +132,21 @@ export default function CallPage() {
         // 8) Réception du flux distant
         peerConnection.current.ontrack = ({ streams: [remoteStream] }) => {
             console.log('Flux distant reçu', remoteStream)
-            remoteStreamRef.current.addTrack(remoteStream)
+            const el = remoteAudioRef.current
+            el.srcObject = remoteStream
+            el.muted = false
+            el.volume = 1
+            // relancer play si nécessaire
+            el.play().catch(() => {})
         }
     }, [callId, handleSignal, createAndSendOffer, cleanup, navigate])
 
     // Cleanup on unmount
-    useEffect(() => cleanup, [cleanup])
+    useEffect(() => {
+        return () => {
+            cleanup()
+        }
+    }, [])
 
     // UI avant / après join
     if (!hasJoined) {
@@ -152,9 +166,9 @@ export default function CallPage() {
     return (
         <div style={{ padding: '1rem' }}>
             <h2>Appel en cours : {callId}</h2>
-            <h3>Participants ({participants.length})</h3>
+            <h3>Participants ({participants?.length ?? 0})</h3>
             <ul>
-                {participants.map(id => (
+                {(participants || []).map(id => (
                     <li key={id}>{id}</li>
                 ))}
             </ul>
