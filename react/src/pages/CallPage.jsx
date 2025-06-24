@@ -10,10 +10,18 @@ export default function CallPage() {
     const localAudioRef = useRef()
     const remoteAudioRef = useRef()
     const pcRef = useRef()
+
+    const mediaRecorderRef = useRef(null)
+    const recordedChunksRef = useRef([])
+
     const [joined, setJoined] = useState(false)
 
     // Nettoyage
     const cleanup = () => {
+        if (mediaRecorderRef.current?.state === 'recording') {
+            mediaRecorderRef.current.stop()
+        }
+
         pcRef.current?.close()
         if (localStream) {
             localStream.getTracks().forEach(t => t.stop())
@@ -28,6 +36,48 @@ export default function CallPage() {
         navigate('/')
     }
 
+    const setupCombinedRecording = (local, remote) => {
+        const audioCtx = new AudioContext()
+        const destination = audioCtx.createMediaStreamDestination()
+
+        // Source locale
+        if (local.getAudioTracks().length) {
+            const srcLocal = audioCtx.createMediaStreamSource(local)
+            srcLocal.connect(destination)
+        }
+        // Source distante
+        if (remote.getAudioTracks().length) {
+            const srcRemote = audioCtx.createMediaStreamSource(remote)
+            srcRemote.connect(destination)
+        }
+
+        recordedChunksRef.current = []
+        const options = {
+            mimeType: 'audio/webm;codecs=opus',
+            audioBitsPerSecond: 32000
+        }
+        const recorder = new MediaRecorder(destination.stream, options)
+        mediaRecorderRef.current = recorder
+
+        recorder.ondataavailable = e => {
+            if (e.data.size > 0) recordedChunksRef.current.push(e.data)
+        }
+        recorder.onstop = () => {
+            const blob = new Blob(recordedChunksRef.current, { type: 'audio/webm' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.style.display = 'none'
+            a.href = url
+            a.download = `appel_audio_${Date.now()}.webm`
+            document.body.appendChild(a)
+            a.click()
+            URL.revokeObjectURL(url)
+            document.body.removeChild(a)
+        }
+
+        recorder.start()
+    }
+
     // Initialisation de l’appel (après clic)
     const joinCall = useCallback(async () => {
         setJoined(true)
@@ -36,7 +86,13 @@ export default function CallPage() {
         socket.connect()
 
         // 2) getUserMedia
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                sampleRate: 16000,
+                channelCount: 1
+            },
+            video: false
+        })
         setLocalStream(stream)
         localAudioRef.current.srcObject = stream
 
@@ -59,7 +115,10 @@ export default function CallPage() {
         // 6) réception du flux → audio
         pc.ontrack = ({ streams: [remoteStream] }) => {
             remoteAudioRef.current.srcObject = remoteStream
-            remoteAudioRef.current.play().catch(()=>{})
+            remoteAudioRef.current.play().catch(() => {})
+
+            // Dès que le remoteStream arrive, on démarre l’enregistrement
+            setupCombinedRecording(stream, remoteStream)
         }
 
         // 7) gestion signalling
