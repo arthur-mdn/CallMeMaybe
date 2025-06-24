@@ -1,4 +1,4 @@
 services:
-  web:
+  call-react:
     ports:
       - "3003:3000"

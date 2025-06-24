@@ -5,12 +5,18 @@ const path = require('path');
 const port = 3000;
 
 const server = http.createServer((req, res) => {
-    // Déterminer le chemin du fichier demandé
-    let filePath = '.' + req.url;
-    if (filePath === './') {
-        filePath = './index.html'; // Servir index.html par défaut
-    }
+    const url = req.url;
 
+    const isUUID = /^\/[0-9a-fA-F-]{36}$/.test(url);
+    let filePath;
+
+    if (url === '/' || url === '/index.html') {
+        filePath = './index.html';
+    } else if (isUUID) {
+        filePath = './peer.html';
+    } else {
+        filePath = '.' + url;
+    }
     const extname = String(path.extname(filePath)).toLowerCase();
     const mimeTypes = {
         '.html': 'text/html',

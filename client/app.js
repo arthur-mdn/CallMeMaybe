@@ -9,7 +9,8 @@ window.onload = async () => {
       chatInput = document.querySelector("#chatInput"),
       connection = document.querySelector("#connection"),
       connectBtn = document.querySelector("#connectBtn"),
-      sendBtn = document.querySelector("#sendBtn"); // Added sendBtn
+      sendBtn = document.querySelector("#sendBtn"),
+      shareBtn = document.querySelector("#shareBtn");
 
   let mediaRecorder;
   let recordedChunks = [];
@@ -80,6 +81,18 @@ window.onload = async () => {
     status.innerHTML = "Online";
     peerId.innerHTML = id;
     let call;
+
+    shareBtn.addEventListener("click", function() {
+      console.log("Sharing peer connection " + id);
+
+      const shareData = {
+        title: 'Peer Connection',
+        text: `Connect with peer ID: ${id}`,
+        url: window.location.href + `?peerId=${id}`
+      };
+      navigator.share(shareData).catch(console.error);
+    });
+
     const chatHandler = function (conn) {
       status.innerHTML = "Connected to remote";
       connection.style.display = "none";
@@ -87,6 +100,7 @@ window.onload = async () => {
       chatInput.style.visibility = "visible";
       sendBtn.style.display = "block"; // Show send button
       callBtn.style.display = "block";
+      shareBtn.style.display = "block";
 
       const endCall = function (e) {
         status.innerHTML = "Connected to remote";
