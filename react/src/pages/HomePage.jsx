@@ -1,18 +1,50 @@
-import { useNavigate } from 'react-router-dom'
-import { v4 as uuidv4 } from 'uuid'
+import { Link } from 'react-router-dom'
+import {useAuth} from "../../AuthContext.jsx";
+import {useEffect} from "react";
 
 export default function HomePage() {
-    const navigate = useNavigate()
+    const { authStatus } = useAuth();
 
-    const createCallRoom = () => {
-        const callId = uuidv4()
-        navigate(`/${callId}`, { state: { isCreator: true } })
+    useEffect(() => {
+        console.log(`${authStatus}`);
+    }, [authStatus]);
+    if (authStatus === "loading") {
+        return <p>Chargement...</p>
+    }
+    else if (authStatus === "authenticated") {
+        return (
+            <div style={{ textAlign: 'center', marginTop: '4rem' }}>
+                <h1>Bienvenue dans l'application de visioconférence</h1>
+                <div style={{ margin: '1rem' }}>
+                    <Link to="/create">
+                        <button style={{ padding: '1rem 2rem' }}>Créer un appel</button>
+                    </Link>
+                </div>
+                <div style={{ margin: '1rem' }}>
+                    <Link to="/join">
+                        <button style={{ padding: '1rem 2rem' }}>Rejoindre un appel</button>
+                    </Link>
+                </div>
+            </div>
+        )
+    }
+    else {
+        return (
+            <div style={{ textAlign: 'center', marginTop: '4rem' }}>
+                <h1>Bienvenue</h1>
+                <div style={{ margin: '1rem' }}>
+                    <Link to="/login">
+                        <button style={{ padding: '1rem 2rem' }}>Admin Login</button>
+                    </Link>
+                </div>
+                <div style={{ margin: '1rem' }}>
+                    <Link to="/join">
+                        <button style={{ padding: '1rem 2rem' }}>Rejoindre un appel</button>
+                    </Link>
+                </div>
+            </div>
+        )
     }
 
-    return (
-        <div style={{ textAlign: 'center', marginTop: '5rem' }}>
-            <h1>Créer une salle d'appel</h1>
-            <button onClick={createCallRoom}>Démarrer un appel</button>
-        </div>
-    )
+
 }

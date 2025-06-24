@@ -1,31 +1,38 @@
 services:
   call-react:
-    build: ./react
+    build:
+      context: ./react
+      dockerfile: Dockerfile.dev
+    command: npm run dev -- --port 5174 --host 0.0.0.0
     volumes:
       - ./react:/app
       - /app/node_modules
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.call-react.rule=Host(`call.mds.mondon.pro`)"
-      - "traefik.http.routers.call-react.entrypoints=websecure"
-      - "traefik.http.routers.call-react.tls.certresolver=myresolver"
+    ports:
+      - "5174:5174"
+    depends_on:
+      - call-server
 
   call-server:
-    build: ./server
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    command: nodemon server.js
     volumes:
       - ./server:/app
       - /app/node_modules
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.call-server.rule=Host(`api.call.mds.mondon.pro`)"
-      - "traefik.http.services.call-server.loadbalancer.server.port=3003"
-      - "traefik.http.routers.call-server.entrypoints=websecure"
-      - "traefik.http.routers.call-server.tls.certresolver=myresolver"
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - call-mongo
 
   call-mongo:
     image: mongo:latest
     volumes:
       - call-mongo-data:/data/db
+    ports:
+      - "27017:27017"
 
 volumes:
   call-mongo-data:
