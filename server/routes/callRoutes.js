@@ -52,22 +52,9 @@ router.post('/', verifyToken, async (req, res) => {
     }
 })
 
-// Get call by ID
-router.get('/:callId', async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
     try {
-        const call = await Call.findOne({ callId: req.params.callId })
-        if (!call) {
-            return res.status(404).json({ exists: false })
-        }
-        res.status(200).json({ exists: true, call })
-    } catch (err) {
-        res.status(500).json({ error: 'Erreur lors de la récupération de l\'appel' })
-    }
-})
-
-router.get('/', async (req, res) => {
-    try {
-        const calls = await Call.find().sort({ startedAt: -1 })
+        const calls = await Call.find({});
         res.status(200).json(calls)
     } catch (err) {
         res.status(500).json({ error: 'Erreur lors de la récupération des appels' })

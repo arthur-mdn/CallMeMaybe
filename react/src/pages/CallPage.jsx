@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import socket from '../socket'
 import {useAuth} from "../../AuthContext.jsx";
 import axios from "axios";
@@ -7,8 +7,8 @@ import axios from "axios";
 export default function CallPage() {
     const { callId } = useParams()
     const {authStatus} = useAuth();
+    const [callDetails, setCallDetails] = useState(null)
     const isCreator = authStatus === 'authenticated'
-    const navigate = useNavigate()
     const [localStream, setLocalStream] = useState(null)
     const localAudioRef = useRef()
     const remoteAudioRef = useRef()
@@ -21,21 +21,16 @@ export default function CallPage() {
 
 
     useEffect(() => {
-        try {
-            axios.get(`${import.meta.env.VITE_API_URL}/api/calls/${callId}`, { withCredentials: true })
-                .then(response => {
-                    if (!response.data.exists) {
-                        alert('Cet appel n’existe pas ou a été supprimé.')
-                        navigate('/')
-                    }
-                })
+        socket.connect()
+        socket.emit('get-call-details', { callId })
+        socket.on('call-details', ({ call }) => {
+            setCallDetails(call)
+        })
+        // cleanup listener
+        return () => {
+            socket.off('call-details')
         }
-        catch (error) {
-            console.error('Erreur lors de la vérification de l’appel:', error)
-            alert('Erreur lors de la vérification de l’appel. Veuillez réessayer.')
-        }
-
-    }, [callId, navigate])
+    }, [callId])
 
     useEffect(() => {
         console.log(`🔗 Appel ID: ${callId} - Créateur: ${isCreator}, authStatus: ${authStatus}`);
@@ -58,13 +53,13 @@ export default function CallPage() {
             localStream.getTracks().forEach(t => t.stop())
         }
         socket.disconnect()
+        setJoined(false)
     }
 
     // Hang up
     const hangUp = () => {
         socket.emit('hangup', { callId })
         cleanup()
-        navigate('/')
     }
 
     const setupCombinedRecording = (local, remote) => {
@@ -204,6 +199,11 @@ export default function CallPage() {
             await pc.setRemoteDescription(new RTCSessionDescription(answer))
         })
 
+        socket.on('call-details', ({ call }) => {
+            console.log('Détails de l’appel:', call)
+            setCallDetails(call)
+        });
+
         socket.on('candidate', async ({ candidate }) => {
             try {
                 await pc.addIceCandidate(new RTCIceCandidate(candidate))
@@ -226,7 +226,7 @@ export default function CallPage() {
                 socket.emit('offer', { callId, offer })
             })
         }
-    }, [callId, isCreator, navigate])
+    }, [callId, isCreator])
 
     return (
         <div>
@@ -243,6 +243,21 @@ export default function CallPage() {
                         value={window.location.href}
                         style={{width: '100%', height: '2rem', marginBottom: '1rem', resize: 'none'}}
                     />
+
+                    <h3>Détails</h3>
+                    {callDetails ? (
+                        <div>
+                            <p><strong>ID de l’appel:</strong> {callDetails.callId}</p>
+                            <p><strong>Créé le:</strong> {new Date(callDetails.startedAt).toLocaleString()}</p>
+                            <p><strong>Participants:</strong> {callDetails.participants.join(', ')}</p>
+                            {callDetails.endedAt && (
+                                <p><strong>Terminé le:</strong> {new Date(callDetails.endedAt).toLocaleString()}</p>
+                            )}
+                            <p><strong>Audio:</strong> {callDetails.audioPath ? callDetails.audioPath : 'Non enregistré'}</p>
+                        </div>
+                    ) : (
+                        <p>Aucun détail disponible.</p>
+                    )}
                 </>
             )}
 

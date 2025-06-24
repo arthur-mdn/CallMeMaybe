@@ -1,16 +1,36 @@
+import Call from '../models/Call.js'
+
 export default function initSocket(io) {
-    const rooms = {}
-
     io.on('connection', socket => {
-        socket.on('join-call', ({ callId }) => {
-            if (!rooms[callId]) rooms[callId] = new Set()
-            rooms[callId].add(socket.id)
-            socket.join(callId)
 
-            // Si on est deux, on est « ready »
-            if (rooms[callId].size === 2) {
+        async function broadcastParticipants(callId) {
+            const call = await Call.findOne({ callId })
+            console.log('call-details');
+            io.to(callId).emit('call-details', {call})
+        }
+
+        socket.on('join-call', async ({ callId }) => {
+            const call = await Call.findOne({ callId })
+            if (!call) {
+                socket.emit('error', { message: 'Room introuvable' })
+                return
+            }
+
+            if (!call.participants.includes(socket.id)) {
+                call.participants.push(socket.id)
+                await call.save()
+            }
+
+            socket.join(callId)
+            if (call.participants.length === 2) {
                 io.to(callId).emit('ready')
             }
+            broadcastParticipants(callId)
+        })
+
+        socket.on('get-call-details', async ({ callId }) => {
+            const call = await Call.findOne({ callId })
+            socket.emit('call-details', { call })
         })
 
         socket.on('offer', ({ callId, offer }) => {
@@ -25,20 +45,36 @@ export default function initSocket(io) {
             socket.to(callId).emit('candidate', { candidate })
         })
 
-        socket.on('hangup', ({ callId }) => {
+        socket.on('hangup', async ({ callId }) => {
             socket.to(callId).emit('hangup')
-            rooms[callId]?.delete(socket.id)
+
+            await Call.findOneAndUpdate(
+                { callId },
+                {
+                    $pull: { participants: socket.id },
+                    $set: { endedAt: new Date() }
+                }
+            )
+
             socket.leave(callId)
-            if (rooms[callId]?.size === 0) delete rooms[callId]
+            broadcastParticipants(callId)
         })
 
-        socket.on('disconnecting', () => {
-            socket.rooms.forEach(r => {
-                if (r === socket.id) return
-                rooms[r]?.delete(socket.id)
-                socket.to(r).emit('hangup')
-                if (rooms[r]?.size === 0) delete rooms[r]
-            })
+        socket.on('disconnecting', async () => {
+            for (const room of socket.rooms) {
+                if (room === socket.id) continue
+
+                await Call.findOneAndUpdate(
+                    { callId: room },
+                    {
+                        $pull: { participants: socket.id },
+                        $set: { endedAt: new Date() }
+                    }
+                )
+
+                socket.to(room).emit('hangup')
+                broadcastParticipants(room)
+            }
         })
     })
 }
