@@ -102,10 +102,18 @@ export default function CallPage() {
         setLocalStream(stream)
         localAudioRef.current.srcObject = stream
 
-        // 3) création du peer
-        const pc = new RTCPeerConnection({
-            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-        })
+        // 2) fetch TURN credentials
+        const response = await fetch(
+            "https://fulldroper.metered.live/api/v1/turn/credentials?apiKey=20b057434f2dba67cce42dbf43a66658ba5d"
+        )
+        const servers = await response.json()
+
+        // 3) PeerConnection avec STUN + TURN
+        const iceServers = [
+            { urls: "stun:stun.l.google.com:19302" },
+            ...servers
+        ]
+        const pc = new RTCPeerConnection({ iceServers })
         pcRef.current = pc
 
         // 4) piste locale → peer
