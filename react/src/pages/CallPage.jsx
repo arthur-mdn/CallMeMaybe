@@ -18,11 +18,17 @@ export default function CallPage() {
 
     // Nettoyage
     const cleanup = () => {
+        socket.off('offer')
+        socket.off('answer')
+        socket.off('candidate')
+        socket.off('hangup')
+
         if (mediaRecorderRef.current?.state === 'recording') {
             mediaRecorderRef.current.stop()
         }
 
         pcRef.current?.close()
+        pcRef.current = null
         if (localStream) {
             localStream.getTracks().forEach(t => t.stop())
         }
