@@ -11,7 +11,6 @@ import { dirname } from 'path'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-// Configure multer for audio file storage
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, path.join(__dirname, '../records'))
@@ -61,7 +60,7 @@ router.get('/', verifyToken, async (req, res) => {
     }
 })
 
-router.post('/:callId/audio', upload.single('audio'), async (req, res) => {
+router.put('/:callId/audio', verifyToken, upload.single('audio'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'Aucun fichier audio fourni' })
@@ -71,7 +70,7 @@ router.post('/:callId/audio', upload.single('audio'), async (req, res) => {
         if (!call) {
             return res.status(404).json({ 
                 error: 'Appel non trouvé',
-                savedAudioPath: req.file.filename // On renvoie quand même le nom du fichier
+                savedAudioPath: req.file.filename
             })
         }
 
@@ -80,10 +79,9 @@ router.post('/:callId/audio', upload.single('audio'), async (req, res) => {
 
         res.status(200).json({ message: 'Audio enregistré avec succès', call })
     } catch (err) {
-        // En cas d'erreur, on garde quand même le fichier
-        res.status(500).json({ 
+        res.status(500).json({
             error: 'Erreur lors de l\'enregistrement de l\'audio',
-            savedAudioPath: req.file?.filename // On renvoie quand même le nom du fichier si disponible
+            savedAudioPath: req.file?.filename
         })
     }
 })

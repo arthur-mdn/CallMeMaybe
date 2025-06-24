@@ -97,7 +97,7 @@ export default function CallPage() {
         formData.append('audio', blob, `call-${callId}.webm`);
         
             try {
-                const response = await axios.post(
+                const response = await axios.put(
                     `${import.meta.env.VITE_API_URL}/api/calls/${callId}/audio`,
                     formData,
                     {
