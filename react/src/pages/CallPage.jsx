@@ -1,10 +1,13 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { useParams, useLocation, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import socket from '../socket'
+import {useAuth} from "../../AuthContext.jsx";
+import axios from "axios";
 
 export default function CallPage() {
     const { callId } = useParams()
-    const isCreator = useLocation().state?.isCreator
+    const {authStatus} = useAuth();
+    const isCreator = authStatus === 'authenticated'
     const navigate = useNavigate()
     const [localStream, setLocalStream] = useState(null)
     const localAudioRef = useRef()
@@ -15,6 +18,28 @@ export default function CallPage() {
     const recordedChunksRef = useRef([])
 
     const [joined, setJoined] = useState(false)
+
+
+    useEffect(() => {
+        try {
+            axios.get(`${import.meta.env.VITE_API_URL}/api/calls/${callId}`, { withCredentials: true })
+                .then(response => {
+                    if (!response.data.exists) {
+                        alert('Cet appel n’existe pas ou a été supprimé.')
+                        navigate('/')
+                    }
+                })
+        }
+        catch (error) {
+            console.error('Erreur lors de la vérification de l’appel:', error)
+            alert('Erreur lors de la vérification de l’appel. Veuillez réessayer.')
+        }
+
+    }, [callId, navigate])
+
+    useEffect(() => {
+        console.log(`🔗 Appel ID: ${callId} - Créateur: ${isCreator}, authStatus: ${authStatus}`);
+    }, [isCreator, authStatus]);
 
     // Nettoyage
     const cleanup = () => {
@@ -68,17 +93,42 @@ export default function CallPage() {
         recorder.ondataavailable = e => {
             if (e.data.size > 0) recordedChunksRef.current.push(e.data)
         }
-        recorder.onstop = () => {
+
+        recorder.onstop = async () => {
             const blob = new Blob(recordedChunksRef.current, { type: 'audio/webm' })
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.style.display = 'none'
-            a.href = url
-            a.download = `appel_audio_${Date.now()}.webm`
-            document.body.appendChild(a)
-            a.click()
-            URL.revokeObjectURL(url)
-            document.body.removeChild(a)
+            
+        // Create FormData and send to server
+        const formData = new FormData();
+        formData.append('audio', blob, `call-${callId}.webm`);
+        
+            try {
+                const response = await axios.post(
+                    `${import.meta.env.VITE_API_URL}/api/calls/${callId}/audio`,
+                    formData,
+                    {
+                        withCredentials: true,
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    }
+                );
+
+                console.log('Audio uploaded successfully');
+                console.log('Server response:', response.data);
+            } catch (error) {
+                console.error('Failed to upload audio:', error.response?.data || error.message);
+            }
+        
+            // If you still want to offer download to user (optional)
+            // const url = URL.createObjectURL(blob)
+            // const a = document.createElement('a')
+            // a.style.display = 'none'
+            // a.href = url
+            // a.download = `appel_audio_${Date.now()}.webm`
+            // document.body.appendChild(a)
+            // a.click()
+            // URL.revokeObjectURL(url)
+            // document.body.removeChild(a)
         }
 
         recorder.start()
@@ -178,28 +228,45 @@ export default function CallPage() {
         }
     }, [callId, isCreator, navigate])
 
-    // UI
-    if (!joined) {
-        return (
-            <div style={{ textAlign: 'center', marginTop: '4rem' }}>
-                <h2>{isCreator ? 'Démarrer l’appel' : 'Rejoindre l’appel'}</h2>
-                <button onClick={joinCall} style={{ padding: '1rem 2rem', fontSize: '1.2rem' }}>
-                    {isCreator ? 'Démarrer' : 'Rejoindre'}
-                </button>
-            </div>
-        )
-    }
-
     return (
-        <div style={{ padding: '1rem' }}>
-            <h2>En cours : {callId}</h2>
-            <div>
-                <audio ref={localAudioRef} autoPlay muted controls />
-                <audio ref={remoteAudioRef} autoPlay controls />
-            </div>
-            <button onClick={hangUp} style={{ marginTop: '1rem', background: 'crimson', color: 'white', padding: '0.5rem 1rem' }}>
-                Raccrocher
-            </button>
-        </div>
-    )
+        <div>
+            <h2>Appel {callId}</h2>
+            {isCreator && (
+                <>
+                    <button id={"share_link_button"} onClick={() => {
+                        navigator.clipboard.writeText(window.location.href)
+                        alert('Lien copié dans le presse-papiers !')
+                    }} style={{marginBottom: '1rem'}}> Partager
+                    </button>
+                    <textarea
+                        readOnly
+                        value={window.location.href}
+                        style={{width: '100%', height: '2rem', marginBottom: '1rem', resize: 'none'}}
+                    />
+                </>
+            )}
+
+            {!joined && (
+                <div style={{marginTop: '4rem'}}>
+                    <h2>{isCreator ? 'Démarrer l’appel' : 'Rejoindre l’appel'}</h2>
+                    <button onClick={joinCall} style={{fontSize: '1.2rem'}}>
+                        {isCreator ? 'Démarrer' : 'Rejoindre'}
+                    </button>
+                </div>
+            )}
+            {joined && (
+                <div>
+                <div>
+                        <audio ref={localAudioRef} autoPlay muted controls/>
+                        <audio ref={remoteAudioRef} autoPlay controls/>
+                    </div>
+                    <button onClick={hangUp} style={{marginTop: '1rem', background: 'crimson', color: 'white'}}>
+                        Raccrocher
+                    </button>
+                </div>
+                )
+            }
+
+</div>
+)
 }
