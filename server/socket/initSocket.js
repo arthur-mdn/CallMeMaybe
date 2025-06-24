@@ -19,8 +19,15 @@ export default function initSocket(io) {
             // 2) On fait rejoindre Socket.IO pour l’acheminement WebRTC
             socket.join(callId)
 
+            socket.to(callId).emit('user-joined', { userId: socket.id })
+
             // 3) Broadcast de la liste mise à jour
             broadcastParticipants(callId)
+        })
+
+        socket.on('signal', ({ callId, data }) => {
+            // renvoie à tous les autres participants de la même room
+            socket.to(callId).emit('signal', { data })
         })
 
         // ----------------------------------------------------------------------

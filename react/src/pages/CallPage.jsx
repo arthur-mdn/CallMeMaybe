@@ -86,7 +86,7 @@ export default function CallPage() {
             )
         })
         socket.on('signal', ({ data }) => handleSignal(data))
-        socket.on('user-joined', ({ initiator }) => initiator && createAndSendOffer())
+
         socket.on('hangup', () => {
             alert("L’autre participant a quitté l’appel.")
             cleanup()
@@ -111,6 +111,12 @@ export default function CallPage() {
         // 5) Créer la RTCPeerConnection
         peerConnection.current = new RTCPeerConnection({
             iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        })
+        socket.on('user-joined', ({ userId }) => {
+            console.log('Un autre user vient de rejoindre:', userId)
+            if (isCreator) {
+                createAndSendOffer()
+            }
         })
         peerConnection.current.oniceconnectionstatechange = () =>
             console.log('ICE state:', peerConnection.current.iceConnectionState)
