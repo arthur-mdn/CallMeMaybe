@@ -114,8 +114,32 @@ export default function CallPage() {
                 console.log('Server response:', response.data);
                 setCallDetails(prev => ({
                     ...prev,
-                    audioPath: response.data.call.audioPath || prev.audioPath
+                    audioPath: response.data.call.audioPath || prev.audioPath,
+                    transcript: response.data.call.transcript || prev.transcript
                 }));
+                // set interval to check if transcription is ready
+                const checkTranscription = setInterval(async () => {
+                    try {
+                        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/calls/${callId}`, {
+                            withCredentials: true
+                        });
+                        if (res.data.transcript.status === 'success') {
+                            clearInterval(checkTranscription);
+                            setCallDetails(prev => ({
+                                ...prev,
+                                transcript: res.data.transcript
+                            }));
+                        } else if (res.data.transcript.status === 'error') {
+                            clearInterval(checkTranscription);
+                            setCallDetails(prev => ({
+                                ...prev,
+                                transcript: res.data.transcript.error
+                            }));
+                        }
+                    } catch (error) {
+                        console.error('Error checking transcription status:', error);
+                    }
+                }, 2000);
             } catch (error) {
                 console.error('Failed to upload audio:', error.response?.data || error.message);
             }
@@ -294,9 +318,20 @@ export default function CallPage() {
                             {callDetails.endedAt && (
                                 <p><strong>Terminé le:</strong> {new Date(callDetails.endedAt).toLocaleString()}</p>
                             )}
-                            <p>
-                                <strong>Audio:</strong> {callDetails.audioPath ? callDetails.audioPath : 'Non enregistré'}
-                            </p>
+                            <p><strong>Audio:</strong> {callDetails.audioPath ? callDetails.audioPath : 'Non enregistré'}</p>
+                            <div>
+                                <p><strong>Transcription:</strong> {
+                                    !callDetails.audioPath ? 'Aucune transcription' :
+                                    !callDetails.transcript ? 'Aucune transcription' :
+                                    callDetails.transcript.status === 'waiting' ? '⌛ En attente...' :
+                                    callDetails.transcript.status === 'started' ? '🔄 En cours...' :
+                                    callDetails.transcript.status === 'success' ? 
+                                        callDetails.transcript.txtContent || 'Aucune transcription' :
+                                    callDetails.transcript.status === 'error' ? 
+                                        `❌ Erreur: ${callDetails.transcript.error}` :
+                                    'État inconnu'
+                                }</p>
+                            </div>
                         </div>
                     ) : (
                         <p className="text-gray-600 italic">Aucun détail disponible.</p>

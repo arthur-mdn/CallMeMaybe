@@ -6,6 +6,20 @@ const CallSchema = new mongoose.Schema({
   endedAt: { type: Date },
   transcript: { type: String },
   audioPath: { type: String },
+  transcript: {
+    status: {
+      type: String,
+      enum: ['waiting', 'started', 'success', 'error'],
+    },
+    txtContent: {
+      type: String,
+      default: ''
+    },
+    error: {
+      type: String,
+      default: ''
+    }
+  },
   participants: [{ type: String }],
 });
 
