@@ -8,6 +8,8 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 
+import { transcribeAudio } from '../services/whisperService.js';
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
@@ -84,15 +86,51 @@ router.put('/:callId/audio', verifyToken, upload.single('audio'), async (req, re
             })
         }
 
+        // Save audio path and set transcript status to waiting
         call.audioPath = req.file.filename
+        call.transcript = {
+            status: 'waiting',
+            txtContent: '',
+            error: ''
+        }
         await call.save()
 
-        res.status(200).json({ message: 'Audio enregistré avec succès', call })
+        // Do transcription in background
+        transcribeAudio(req.file.path)
+            .then(async (transcriptText) => {
+                const updatedCall = await Call.findOneAndUpdate(
+                    { callId: req.params.callId },
+                    { 
+                        transcript: {
+                            status: 'success',
+                            txtContent: transcriptText || '',
+                            error: ''
+                        }
+                    },
+                    { new: true }
+                );
+                
+                console.log('Transcription saved for call:', req.params.callId);
+            })
+            .catch(async (error) => {
+                const updatedCall = await Call.findOneAndUpdate(
+                    { callId: req.params.callId },
+                    { 
+                        transcript: {
+                            status: 'error',
+                            txtContent: '',
+                            error: error.message
+                        }
+                    },
+                    { new: true }
+                );
+                
+                console.error('Transcription error:', error);
+            }); 
+
+        res.status(200).json({ message: 'Audio enregistré avec succès', call})
     } catch (err) {
-        res.status(500).json({
-            error: 'Erreur lors de l\'enregistrement de l\'audio',
-            savedAudioPath: req.file?.filename
-        })
+        res.status(500).json({ error: 'Erreur lors de l\'enregistrement de l\'audio',savedAudioPath: req.file?.filename})
     }
 })
 
