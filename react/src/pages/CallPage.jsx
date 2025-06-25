@@ -19,28 +19,12 @@ export default function CallPage() {
 
     const [joined, setJoined] = useState(false)
 
-
     useEffect(() => {
-        socket.connect()
-
-        const sendDetails = () => {
-            socket.emit('get-call-details', { callId })
-        }
-
-        if (socket.connected) {
-            sendDetails()
-        } else {
-            socket.once('connect', sendDetails)
-        }
-
-        socket.on('call-details', ({ call }) => {
-            setCallDetails(call)
+        axios.get(`${import.meta.env.VITE_API_URL}/api/calls/${callId}`, {
+            withCredentials: true
         })
-
-        return () => {
-            socket.off('connect', sendDetails)
-            socket.off('call-details')
-        }
+            .then(({ data }) => setCallDetails(data))
+            .catch(() => setCallDetails(null))
     }, [callId])
 
     useEffect(() => {
