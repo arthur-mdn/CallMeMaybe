@@ -60,6 +60,16 @@ router.get('/', verifyToken, async (req, res) => {
     }
 })
 
+router.get('/:callId', async (req, res) => {
+    try {
+        const call = await Call.findOne({ callId: req.params.callId })
+        if (!call) return res.status(404).json({ error: 'Appel non trouvé' })
+        res.json(call)
+    } catch (err) {
+        res.status(500).json({ error: 'Erreur serveur' })
+    }
+})
+
 router.put('/:callId/audio', verifyToken, upload.single('audio'), async (req, res) => {
     try {
         if (!req.file) {

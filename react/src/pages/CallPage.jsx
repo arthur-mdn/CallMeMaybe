@@ -19,17 +19,12 @@ export default function CallPage() {
 
     const [joined, setJoined] = useState(false)
 
-
     useEffect(() => {
-        socket.connect()
-        socket.emit('get-call-details', { callId })
-        socket.on('call-details', ({ call }) => {
-            setCallDetails(call)
+        axios.get(`${import.meta.env.VITE_API_URL}/api/calls/${callId}`, {
+            withCredentials: true
         })
-        // cleanup listener
-        return () => {
-            socket.off('call-details')
-        }
+            .then(({ data }) => setCallDetails(data))
+            .catch(() => setCallDetails(null))
     }, [callId])
 
     useEffect(() => {
@@ -110,6 +105,10 @@ export default function CallPage() {
 
                 console.log('Audio uploaded successfully');
                 console.log('Server response:', response.data);
+                setCallDetails(prev => ({
+                    ...prev,
+                    audioPath: response.data.call.audioPath || prev.audioPath
+                }));
             } catch (error) {
                 console.error('Failed to upload audio:', error.response?.data || error.message);
             }
