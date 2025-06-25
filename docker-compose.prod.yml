@@ -3,7 +3,7 @@ services:
     build: ./react
     volumes:
       - ./react:/app
-      - /app/node_modules
+      - react_node_modules:/app/node_modules
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.call-react.rule=Host(`call.mds.mondon.pro`)"
@@ -12,6 +12,9 @@ services:
 
   call-server:
     build: ./server
+    volumes:
+      - ./server:/app
+      - server_node_modules:/app/node_modules
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.call-server.rule=Host(`api.call.mds.mondon.pro`)"
@@ -26,4 +29,8 @@ services:
 
 volumes:
   call-mongo-data:
+    driver: local
+  react_node_modules:
+    driver: local
+  server_node_modules:
     driver: local
