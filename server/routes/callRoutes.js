@@ -10,6 +10,7 @@ import { dirname } from 'path'
 
 import { transcribeAudio } from '../services/whisperService.js';
 import mockTranscript from '../services/mockTranscriptService.js';
+import { generateMetadata } from '../services/aiMetadataService.js';
 import config from '../config.js' 
 
 const __filename = fileURLToPath(import.meta.url)
@@ -93,7 +94,8 @@ router.put('/:callId/audio', verifyToken, upload.single('audio'), async (req, re
         call.transcript = {
             status: 'waiting',
             txtContent: '',
-            error: ''
+            error: '',
+            info: {} 
         }
         await call.save()
 
@@ -103,13 +105,20 @@ router.put('/:callId/audio', verifyToken, upload.single('audio'), async (req, re
         // Do transcription in background
         transcriptionPromise
             .then(async (transcriptText) => {
+            let aiData = {};
+            
+            // Si useAI est true, générer les métadonnées
+           if (call.useAI) {
+                    aiData = await generateMetadata(transcriptText) || {};
+                }
                 await Call.findOneAndUpdate(
                     { callId: req.params.callId },
                     { 
                         transcript: {
                             status: 'success',
                             txtContent: transcriptText || '',
-                            error: ''
+                            error: '',
+                            info: aiData
                         }
                     },
                     { new: true }
@@ -124,7 +133,8 @@ router.put('/:callId/audio', verifyToken, upload.single('audio'), async (req, re
                         transcript: {
                             status: 'error',
                             txtContent: '',
-                            error: error.message
+                            error: error.message,
+                            info: {}
                         }
                     },
                     { new: true }
