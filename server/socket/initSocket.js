@@ -5,7 +5,6 @@ export default function initSocket(io) {
 
         async function broadcastParticipants(callId) {
             const call = await Call.findOne({ callId })
-            console.log('call-details');
             io.to(callId).emit('call-details', {call})
         }
 
@@ -22,9 +21,13 @@ export default function initSocket(io) {
             }
 
             socket.join(callId)
-            if (call.participants.length === 2) {
-                io.to(callId).emit('ready')
-            }
+
+            const others = call.participants.filter(id => id !== socket.id)
+            socket.emit('participants', { participants: others })
+
+            // je préviens les autres de mon arrivée
+            socket.to(callId).emit('new-participant', { socketId: socket.id })
+
             broadcastParticipants(callId)
         })
 
@@ -33,31 +36,40 @@ export default function initSocket(io) {
             socket.emit('call-details', { call })
         })
 
-        socket.on('offer', ({ callId, offer }) => {
-            socket.to(callId).emit('offer', { offer })
+        socket.on('offer', ({ callId, to, offer }) => {
+            io.to(to).emit('offer', { from: socket.id, offer })
+        })
+        socket.on('answer', ({ callId, to, answer }) => {
+            io.to(to).emit('answer', { from: socket.id, answer })
+        })
+        socket.on('candidate', ({ callId, to, candidate }) => {
+            io.to(to).emit('candidate', { from: socket.id, candidate })
         })
 
-        socket.on('answer', ({ callId, answer }) => {
-            socket.to(callId).emit('answer', { answer })
+        socket.on('leave-call', async ({ callId }) => {
+            await Call.findOneAndUpdate(
+                { callId },
+                { $pull: { participants: socket.id } }
+            )
+            socket.leave(callId)
+            socket.to(callId).emit('participant-left', { socketId: socket.id })
+            broadcastParticipants(callId)
         })
 
-        socket.on('candidate', ({ callId, candidate }) => {
-            socket.to(callId).emit('candidate', { candidate })
-        })
+        socket.on('end-call', async ({ callId }) => {
+            const call = await Call.findOne({ callId })
 
-        socket.on('hangup', async ({ callId }) => {
-            socket.to(callId).emit('hangup')
+            io.to(callId).emit('call-ended')
 
             await Call.findOneAndUpdate(
                 { callId },
-                {
-                    $pull: { participants: socket.id },
-                    $set: { endedAt: new Date() }
-                }
+                { $set: { endedAt: new Date(), participants: [] } }
             )
 
-            socket.leave(callId)
-            broadcastParticipants(callId)
+            const clients = await io.in(callId).allSockets()
+            for (const id of clients) {
+                io.sockets.sockets.get(id)?.leave(callId)
+            }
         })
 
         socket.on('disconnecting', async () => {
@@ -72,7 +84,7 @@ export default function initSocket(io) {
                     }
                 )
 
-                socket.to(room).emit('hangup')
+                socket.to(room).emit('participant-left', { socketId: socket.id });
                 broadcastParticipants(room)
             }
         })
