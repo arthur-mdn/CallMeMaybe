@@ -31,12 +31,10 @@ export default function CallPage() {
         console.log(`🔗 Appel ID: ${callId} - Créateur: ${isCreator}, authStatus: ${authStatus}`);
     }, [isCreator, authStatus]);
 
-    // Nettoyage
     const cleanup = () => {
         socket.off('offer')
         socket.off('answer')
         socket.off('candidate')
-        socket.off('hangup')
 
         if (mediaRecorderRef.current?.state === 'recording') {
             mediaRecorderRef.current.stop()
@@ -44,6 +42,9 @@ export default function CallPage() {
 
         Object.values(peerConnections.current).forEach(pc => pc.close())
         peerConnections.current = {}
+        remoteStreams.forEach(r =>
+            r.stream.getTracks().forEach(t => t.stop())
+        );
         setRemoteStreams([])
 
         if (localStream) {
@@ -53,9 +54,12 @@ export default function CallPage() {
         setJoined(false)
     }
 
-    // Hang up
-    const hangUp = () => {
-        socket.emit('hangup', { callId })
+    const handleHangUp = () => {
+        if (isCreator) {
+                socket.emit('end-call', { callId })
+            } else {
+                socket.emit('leave-call', { callId })
+            }
         cleanup()
     }
 
@@ -229,12 +233,30 @@ export default function CallPage() {
             await pc.addIceCandidate(new RTCIceCandidate(candidate))
         })
 
-        socket.on('hangup', () => {
-            alert("L’autre participant a quitté l’appel.")
-            hangUp()
+        socket.on('call-ended', () => {
+            alert("Le créateur a terminé l’appel.")
+            cleanup()
         })
 
-        // Rejoindre (émission « prête »)
+        socket.on('participant-left', ({ socketId }) => {
+            const pc = peerConnections.current[socketId];
+            if (pc) {
+                pc.close();
+                delete peerConnections.current[socketId];
+            }
+
+            setRemoteStreams(prev =>
+                prev
+                    .filter(r => {
+                        if (r.socketId === socketId) {
+                            r.stream.getTracks().forEach(t => t.stop());
+                            return false;
+                        }
+                        return true;
+                    })
+            );
+        });
+
         socket.emit('join-call', { callId })
     }, [callId, isCreator])
 
@@ -303,12 +325,9 @@ export default function CallPage() {
                             />
                         ))}
                     </div>
-                    <button
-                        onClick={hangUp}
-                        className="mt-4 px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150"
-                    >
-                        Raccrocher
-                    </button>
+                    <button onClick={handleHangUp} className="mt-4 px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                    {isCreator ? 'Terminer l’appel' : 'Quitter l’appel'}
+                </button>
                 </div>
             )}
         </div>
