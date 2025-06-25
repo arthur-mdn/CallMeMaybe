@@ -1,4 +1,3 @@
-// server/services/whisperService.js
 import OpenAI from 'openai'
 import fs from 'fs'
 
