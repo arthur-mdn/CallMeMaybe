@@ -315,6 +315,7 @@ export default function CallPage() {
                             <p><strong>ID de l’appel:</strong> {callDetails.callId}</p>
                             <p><strong>Créé le:</strong> {new Date(callDetails.startedAt).toLocaleString()}</p>
                             <p><strong>Participants:</strong> {callDetails.participants.join(', ')}</p>
+                             <p><strong>info:</strong> {callDetails.transcript.info.icon}</p>
                             {callDetails.endedAt && (
                                 <p><strong>Terminé le:</strong> {new Date(callDetails.endedAt).toLocaleString()}</p>
                             )}

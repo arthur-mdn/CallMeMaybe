@@ -5,6 +5,7 @@ const CallSchema = new mongoose.Schema({
   startedAt: { type: Date, default: Date.now },
   endedAt: { type: Date },
   audioPath: { type: String },
+  useAI: { type: Boolean, default: true },
   transcript: {
     status: {
       type: String,
@@ -17,7 +18,12 @@ const CallSchema = new mongoose.Schema({
     error: {
       type: String,
       default: ''
-    }
+    },
+        info: {
+            title: { type: String, default: '' },
+            icon: { type: String, default: '' },
+            description: { type: String, default: '' }
+        }
   },
   participants: [{ type: String }],
 });
