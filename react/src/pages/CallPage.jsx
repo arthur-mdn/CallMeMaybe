@@ -22,12 +22,23 @@ export default function CallPage() {
 
     useEffect(() => {
         socket.connect()
-        socket.emit('get-call-details', { callId })
+
+        const sendDetails = () => {
+            socket.emit('get-call-details', { callId })
+        }
+
+        if (socket.connected) {
+            sendDetails()
+        } else {
+            socket.once('connect', sendDetails)
+        }
+
         socket.on('call-details', ({ call }) => {
             setCallDetails(call)
         })
-        // cleanup listener
+
         return () => {
+            socket.off('connect', sendDetails)
             socket.off('call-details')
         }
     }, [callId])
