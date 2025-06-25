@@ -121,6 +121,10 @@ export default function CallPage() {
 
                 console.log('Audio uploaded successfully');
                 console.log('Server response:', response.data);
+                setCallDetails(prev => ({
+                    ...prev,
+                    audioPath: response.data.call.audioPath || prev.audioPath
+                }));
             } catch (error) {
                 console.error('Failed to upload audio:', error.response?.data || error.message);
             }
