@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import socket from '../socket'
 import {useAuth} from "../../AuthContext.jsx";
 import axios from "axios";
+import QRCode from 'react-qr-code';
 
 export default function CallPage() {
     const { callId } = useParams()
@@ -247,6 +248,9 @@ export default function CallPage() {
                         value={window.location.href}
                         className="w-full h-10 mb-4 p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700 resize-none focus:ring-indigo-500 focus:border-indigo-500"
                     />
+                    <div className="p-4 bg-white inline-block">
+                        <QRCode value={window.location.href} size={128} bgcolor="#ffffff" fgColor="#000000" />
+                    </div>
 
                     <h3 className="text-2xl font-bold text-gray-800 mb-3">Détails</h3>
                     {callDetails ? (
