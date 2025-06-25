@@ -229,59 +229,70 @@ export default function CallPage() {
     }, [callId, isCreator])
 
     return (
-        <div>
-            <h2>Appel {callId}</h2>
+        <div className="p-6 max-w-4xl mx-auto bg-white rounded-xl shadow-md space-y-4 text-gray-900">
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-4">Appel {callId}</h2>
             {isCreator && (
                 <>
-                    <button id={"share_link_button"} onClick={() => {
-                        navigator.clipboard.writeText(window.location.href)
-                        alert('Lien copié dans le presse-papiers !')
-                    }} style={{marginBottom: '1rem'}}> Partager
+                    <button
+                        id={"share_link_button"}
+                        onClick={() => {
+                            navigator.clipboard.writeText(window.location.href)
+                            alert('Lien copié dans le presse-papiers !')
+                        }}
+                        className="mb-4 px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
+                    >
+                        Partager
                     </button>
                     <textarea
                         readOnly
                         value={window.location.href}
-                        style={{width: '100%', height: '2rem', marginBottom: '1rem', resize: 'none'}}
+                        className="w-full h-10 mb-4 p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700 resize-none focus:ring-indigo-500 focus:border-indigo-500"
                     />
 
-                    <h3>Détails</h3>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-3">Détails</h3>
                     {callDetails ? (
-                        <div>
+                        <div className="space-y-2 text-gray-700">
                             <p><strong>ID de l’appel:</strong> {callDetails.callId}</p>
                             <p><strong>Créé le:</strong> {new Date(callDetails.startedAt).toLocaleString()}</p>
                             <p><strong>Participants:</strong> {callDetails.participants.join(', ')}</p>
                             {callDetails.endedAt && (
                                 <p><strong>Terminé le:</strong> {new Date(callDetails.endedAt).toLocaleString()}</p>
                             )}
-                            <p><strong>Audio:</strong> {callDetails.audioPath ? callDetails.audioPath : 'Non enregistré'}</p>
+                            <p>
+                                <strong>Audio:</strong> {callDetails.audioPath ? callDetails.audioPath : 'Non enregistré'}
+                            </p>
                         </div>
                     ) : (
-                        <p>Aucun détail disponible.</p>
+                        <p className="text-gray-600 italic">Aucun détail disponible.</p>
                     )}
                 </>
             )}
 
             {!joined && (
-                <div style={{marginTop: '4rem'}}>
-                    <h2>{isCreator ? 'Démarrer l’appel' : 'Rejoindre l’appel'}</h2>
-                    <button onClick={joinCall} style={{fontSize: '1.2rem'}}>
+                <div className="mt-8 pt-8 border-t border-gray-200">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4">{isCreator ? 'Démarrer l’appel' : 'Rejoindre l’appel'}</h2>
+                    <button
+                        onClick={joinCall}
+                        className="px-8 py-3 bg-green-600 text-white text-lg font-semibold rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition ease-in-out duration-150"
+                    >
                         {isCreator ? 'Démarrer' : 'Rejoindre'}
                     </button>
                 </div>
             )}
             {joined && (
-                <div>
-                <div>
-                        <audio ref={localAudioRef} autoPlay muted controls/>
-                        <audio ref={remoteAudioRef} autoPlay controls/>
+                <div className="mt-8 pt-8 border-t border-gray-200">
+                    <div className="flex flex-col space-y-4 mb-4">
+                        <audio ref={localAudioRef} autoPlay muted controls className="w-full rounded-md shadow-sm"/>
+                        <audio ref={remoteAudioRef} autoPlay controls className="w-full rounded-md shadow-sm"/>
                     </div>
-                    <button onClick={hangUp} style={{marginTop: '1rem', background: 'crimson', color: 'white'}}>
+                    <button
+                        onClick={hangUp}
+                        className="mt-4 px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150"
+                    >
                         Raccrocher
                     </button>
                 </div>
-                )
-            }
-
-</div>
-)
+            )}
+        </div>
+    )
 }
