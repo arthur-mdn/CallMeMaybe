@@ -314,7 +314,7 @@ export default function CallPage() {
             {joined && (
                 <div className="mt-8 pt-8 border-t border-gray-200">
                     <div className="flex flex-col space-y-4 mb-4">
-                        <audio ref={localAudioRef} autoPlay muted controls/>
+                        <audio ref={localAudioRef} autoPlay muted controls style={{display:'none'}}/>
                         {remoteStreams.map(r => (
                             <audio
                                 key={r.socketId}
