@@ -54,7 +54,7 @@ export default function HomePageAdmin() {
                                 <p className="text-gray-600 mb-2 sm:mb-0"><strong>Créé
                                     le:</strong> {new Date(call.startedAt).toLocaleString()}</p>
                                 <Link to={`/room/${call.callId}`}
-                                      class="px-5 py-2 bg-black text-white font-semibold rounded-md hover:bg-purple-700 transition duration-300 ease-in-out">Voir</Link>
+                                      className="px-5 py-2 bg-black text-white font-semibold rounded-md hover:bg-purple-700 transition duration-300 ease-in-out">Voir</Link>
                             </li>
                         ))}
                     </ul>

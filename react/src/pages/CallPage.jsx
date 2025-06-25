@@ -11,8 +11,8 @@ export default function CallPage() {
     const isCreator = authStatus === 'authenticated'
     const [localStream, setLocalStream] = useState(null)
     const localAudioRef = useRef()
-    const remoteAudioRef = useRef()
-    const pcRef = useRef()
+    const peerConnections = useRef({})
+    const [remoteStreams, setRemoteStreams] = useState([])
 
     const mediaRecorderRef = useRef(null)
     const recordedChunksRef = useRef([])
@@ -31,19 +31,22 @@ export default function CallPage() {
         console.log(`🔗 Appel ID: ${callId} - Créateur: ${isCreator}, authStatus: ${authStatus}`);
     }, [isCreator, authStatus]);
 
-    // Nettoyage
     const cleanup = () => {
         socket.off('offer')
         socket.off('answer')
         socket.off('candidate')
-        socket.off('hangup')
 
         if (mediaRecorderRef.current?.state === 'recording') {
             mediaRecorderRef.current.stop()
         }
 
-        pcRef.current?.close()
-        pcRef.current = null
+        Object.values(peerConnections.current).forEach(pc => pc.close())
+        peerConnections.current = {}
+        remoteStreams.forEach(r =>
+            r.stream.getTracks().forEach(t => t.stop())
+        );
+        setRemoteStreams([])
+
         if (localStream) {
             localStream.getTracks().forEach(t => t.stop())
         }
@@ -51,9 +54,12 @@ export default function CallPage() {
         setJoined(false)
     }
 
-    // Hang up
-    const hangUp = () => {
-        socket.emit('hangup', { callId })
+    const handleHangUp = () => {
+        if (isCreator) {
+                socket.emit('end-call', { callId })
+            } else {
+                socket.emit('leave-call', { callId })
+            }
         cleanup()
     }
 
@@ -128,14 +134,44 @@ export default function CallPage() {
         recorder.start()
     }
 
-    // Initialisation de l’appel (après clic)
+    const createPeer = (socketId, initiator, iceServers, localStream) => {
+        const pc = new RTCPeerConnection({ iceServers })
+        peerConnections.current[socketId] = pc
+
+        localStream.getTracks().forEach(track =>
+            pc.addTrack(track, localStream)
+        )
+
+        pc.onicecandidate = ({ candidate }) => {
+            if (candidate) {
+                socket.emit('candidate', { callId, to: socketId, candidate })
+            }
+        }
+
+        pc.ontrack = ({ streams: [remoteStream] }) => {
+            setRemoteStreams(prev =>
+                prev.find(r => r.socketId === socketId)
+                    ? prev
+                    : [...prev, { socketId, stream: remoteStream }]
+            )
+            setupCombinedRecording(localStream, remoteStream)
+        }
+
+        // si c’est l’initiateur, on crée et envoie l’offre
+        if (initiator) {
+            pc.createOffer()
+                .then(offer => pc.setLocalDescription(offer))
+                .then(() =>
+                    socket.emit('offer', { callId, to: socketId, offer: pc.localDescription })
+                )
+        }
+    }
+
     const joinCall = useCallback(async () => {
         setJoined(true)
 
-        // 1) ouverture du socket
         socket.connect()
 
-        // 2) getUserMedia
         const stream = await navigator.mediaDevices.getUserMedia({
             audio: {
                 sampleRate: 16000,
@@ -146,85 +182,82 @@ export default function CallPage() {
         setLocalStream(stream)
         localAudioRef.current.srcObject = stream
 
-        // 2) fetch TURN credentials
+        // fetch TURN credentials
         const response = await fetch(
             "https://fulldroper.metered.live/api/v1/turn/credentials?apiKey=20b057434f2dba67cce42dbf43a66658ba5d"
         )
         const servers = await response.json()
 
-        // 3) PeerConnection avec STUN + TURN
+        // PeerConnection avec STUN + TURN
         const iceServers = [
             { urls: "stun:stun.l.google.com:19302" },
             ...servers
         ]
-        const pc = new RTCPeerConnection({ iceServers })
-        pcRef.current = pc
 
-        // 4) piste locale → peer
-        stream.getTracks().forEach(track => pc.addTrack(track, stream))
+        socket.on('participants', ({ participants }) => {
+            participants.forEach(id =>
+                createPeer(id, true, iceServers, stream)
+            )
+        })
 
-        // 5) candidates → socket
-        pc.onicecandidate = ({ candidate }) => {
-            if (candidate) {
-                socket.emit('candidate', { callId, candidate })
+        socket.on('new-participant', ({ socketId: id }) => {
+            if (id !== socket.id) {
+                createPeer(id, false, iceServers, stream)
             }
-        }
+        })
 
-        pc.oniceconnectionstatechange = () =>
-            console.log('🔥 ICE connection state:', pc.iceConnectionState)
-
-        pc.onconnectionstatechange = () =>
-            console.log('🔗 Peer connection state:', pc.connectionState)
-
-        // 6) réception du flux → audio
-        pc.ontrack = async ({streams: [remoteStream]}) => {
-            remoteAudioRef.current.srcObject = remoteStream
-            await remoteAudioRef.current.play().catch(() => {
-            })
-
-            // Dès que le remoteStream arrive, on démarre l’enregistrement
-            setupCombinedRecording(stream, remoteStream)
-        }
-
-        // 7) gestion signalling
-        socket.on('offer', async ({ offer }) => {
+        socket.on('offer', async ({ from, offer }) => {
+            if (!peerConnections.current[from]) {
+                createPeer(from, false, iceServers, stream)
+            }
+            const pc = peerConnections.current[from]
             await pc.setRemoteDescription(new RTCSessionDescription(offer))
             const answer = await pc.createAnswer()
             await pc.setLocalDescription(answer)
-            socket.emit('answer', { callId, answer })
+            socket.emit('answer', { callId, to: from, answer: pc.localDescription })
         })
 
-        socket.on('answer', async ({ answer }) => {
+        socket.on('answer', async ({ from, answer }) => {
+            const pc = peerConnections.current[from]
             await pc.setRemoteDescription(new RTCSessionDescription(answer))
         })
+
 
         socket.on('call-details', ({ call }) => {
             console.log('Détails de l’appel:', call)
             setCallDetails(call)
         });
 
-        socket.on('candidate', async ({ candidate }) => {
-            try {
-                await pc.addIceCandidate(new RTCIceCandidate(candidate))
-            } catch(e) { console.warn(e) }
+        socket.on('candidate', async ({ from, candidate }) => {
+            const pc = peerConnections.current[from]
+            await pc.addIceCandidate(new RTCIceCandidate(candidate))
         })
 
-        socket.on('hangup', () => {
-            alert("L’autre participant a quitté l’appel.")
-            hangUp()
+        socket.on('call-ended', () => {
+            alert("Le créateur a terminé l’appel.")
+            cleanup()
         })
 
-        // 8) rejoindre (émission « prête »)
+        socket.on('participant-left', ({ socketId }) => {
+            const pc = peerConnections.current[socketId];
+            if (pc) {
+                pc.close();
+                delete peerConnections.current[socketId];
+            }
+
+            setRemoteStreams(prev =>
+                prev
+                    .filter(r => {
+                        if (r.socketId === socketId) {
+                            r.stream.getTracks().forEach(t => t.stop());
+                            return false;
+                        }
+                        return true;
+                    })
+            );
+        });
+
         socket.emit('join-call', { callId })
-
-        // 9) si créateur : envoyer l’offre dès que signaling ready
-        if (isCreator) {
-            socket.once('ready', async () => {
-                const offer = await pc.createOffer()
-                await pc.setLocalDescription(offer)
-                socket.emit('offer', { callId, offer })
-            })
-        }
     }, [callId, isCreator])
 
     return (
@@ -281,15 +314,20 @@ export default function CallPage() {
             {joined && (
                 <div className="mt-8 pt-8 border-t border-gray-200">
                     <div className="flex flex-col space-y-4 mb-4">
-                        <audio ref={localAudioRef} autoPlay muted controls className="w-full rounded-md shadow-sm"/>
-                        <audio ref={remoteAudioRef} autoPlay controls className="w-full rounded-md shadow-sm"/>
+                        <audio ref={localAudioRef} autoPlay muted controls style={{display:'none'}}/>
+                        {remoteStreams.map(r => (
+                            <audio
+                                key={r.socketId}
+                                autoPlay
+                                controls
+                                ref={el => el && (el.srcObject = r.stream)}
+                                className="w-full rounded-md shadow-sm"
+                            />
+                        ))}
                     </div>
-                    <button
-                        onClick={hangUp}
-                        className="mt-4 px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150"
-                    >
-                        Raccrocher
-                    </button>
+                    <button onClick={handleHangUp} className="mt-4 px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                    {isCreator ? 'Terminer l’appel' : 'Quitter l’appel'}
+                </button>
                 </div>
             )}
         </div>
