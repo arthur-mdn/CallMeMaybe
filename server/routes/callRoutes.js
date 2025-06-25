@@ -9,6 +9,8 @@ import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 
 import { transcribeAudio } from '../services/whisperService.js';
+import mockTranscript from '../services/mockTranscriptService.js';
+import config from '../config.js' 
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -95,10 +97,13 @@ router.put('/:callId/audio', verifyToken, upload.single('audio'), async (req, re
         }
         await call.save()
 
+        // Choose transcription method based on config
+        const transcriptionPromise = config.transcription.useMock ? mockTranscript() : transcribeAudio(req.file.path);
+
         // Do transcription in background
-        transcribeAudio(req.file.path)
+        transcriptionPromise
             .then(async (transcriptText) => {
-                const updatedCall = await Call.findOneAndUpdate(
+                await Call.findOneAndUpdate(
                     { callId: req.params.callId },
                     { 
                         transcript: {
@@ -113,7 +118,7 @@ router.put('/:callId/audio', verifyToken, upload.single('audio'), async (req, re
                 console.log('Transcription saved for call:', req.params.callId);
             })
             .catch(async (error) => {
-                const updatedCall = await Call.findOneAndUpdate(
+                await Call.findOneAndUpdate(
                     { callId: req.params.callId },
                     { 
                         transcript: {

@@ -11,6 +11,9 @@ const config = {
         username: process.env.ADMIN_USERNAME || 'admin',
         password: process.env.ADMIN_PASSWORD || 'admin'
     },
+    transcription: {
+        useMock: process.env.USE_MOCK_TRANSCRIPT === 'true',
+    }
 }
 
 export default config
