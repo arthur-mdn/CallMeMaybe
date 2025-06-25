@@ -44,7 +44,7 @@ const router = express.Router()
 router.post('/', verifyToken, async (req, res) => {
     try {
         const call = new Call({
-            callId: Math.random().toString(36).substring(2, 15),
+            callId: Math.random().toString(36).substring(2, 9),
             startedAt: new Date(),
         });
         await call.save()
