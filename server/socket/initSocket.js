@@ -5,7 +5,6 @@ export default function initSocket(io) {
 
         async function broadcastParticipants(callId) {
             const call = await Call.findOne({ callId })
-            console.log('call-details');
             io.to(callId).emit('call-details', {call})
         }
 
@@ -22,9 +21,13 @@ export default function initSocket(io) {
             }
 
             socket.join(callId)
-            if (call.participants.length === 2) {
-                io.to(callId).emit('ready')
-            }
+
+            const others = call.participants.filter(id => id !== socket.id)
+            socket.emit('participants', { participants: others })
+
+            // je préviens les autres de mon arrivée
+            socket.to(callId).emit('new-participant', { socketId: socket.id })
+
             broadcastParticipants(callId)
         })
 
@@ -33,16 +36,14 @@ export default function initSocket(io) {
             socket.emit('call-details', { call })
         })
 
-        socket.on('offer', ({ callId, offer }) => {
-            socket.to(callId).emit('offer', { offer })
+        socket.on('offer', ({ callId, to, offer }) => {
+            io.to(to).emit('offer', { from: socket.id, offer })
         })
-
-        socket.on('answer', ({ callId, answer }) => {
-            socket.to(callId).emit('answer', { answer })
+        socket.on('answer', ({ callId, to, answer }) => {
+            io.to(to).emit('answer', { from: socket.id, answer })
         })
-
-        socket.on('candidate', ({ callId, candidate }) => {
-            socket.to(callId).emit('candidate', { candidate })
+        socket.on('candidate', ({ callId, to, candidate }) => {
+            io.to(to).emit('candidate', { from: socket.id, candidate })
         })
 
         socket.on('hangup', async ({ callId }) => {
