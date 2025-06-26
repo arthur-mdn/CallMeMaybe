@@ -3,7 +3,11 @@ import { useParams } from 'react-router-dom'
 import socket from '../socket'
 import {useAuth} from "../../AuthContext.jsx";
 import axios from "axios";
-import QRCode from 'react-qr-code';
+import Share from "../components/CallPage/Share.jsx";
+import Details from "../components/CallPage/Details.jsx";
+import Retranscription from "../components/CallPage/Retranscription.jsx";
+import Fiche from "../components/CallPage/Fiche.jsx";
+import Enregistrement from "../components/CallPage/Enregistrement.jsx";
 
 export default function CallPage() {
     const { callId } = useParams()
@@ -19,7 +23,6 @@ export default function CallPage() {
     const recordedChunksRef = useRef([])
 
     const [joined, setJoined] = useState(false)
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
     useEffect(() => {
         axios.get(`${import.meta.env.VITE_API_URL}/api/calls/${callId}`, {
@@ -260,7 +263,11 @@ export default function CallPage() {
         })
 
         socket.on('call-ended', () => {
-            alert("Le créateur a terminé l’appel.")
+            alert("Le créateur a terminé l’appel.");
+            setCallDetails(prev => ({
+                ...prev,
+                endedAt: new Date().toISOString()
+            }))
             cleanup()
         })
 
@@ -287,102 +294,17 @@ export default function CallPage() {
     }, [callId, isCreator])
 
     return (
-        <div className="p-6 max-w-4xl mx-auto bg-white rounded-xl shadow-md space-y-4 text-gray-900">
-            <h2 className="text-3xl font-extrabold text-gray-900 mb-4">Appel {callId}</h2>
+        <>
             {isCreator && (
                 <>
-                    <button
-                        id={"share_link_button"}
-                        onClick={() => {
-                            navigator.clipboard.writeText(window.location.href)
-                            alert('Lien copié dans le presse-papiers !')
-                        }}
-                        className="mb-4 px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
-                    >
-                        Partager
-                    </button>
-                    <textarea
-                        readOnly
-                        value={window.location.href}
-                        className="w-full h-10 mb-4 p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700 resize-none focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                    <div className="p-4 bg-white inline-block">
-                        <QRCode value={window.location.href} size={128} bgcolor="#ffffff" fgColor="#000000" />
-                    </div>
-
-                    <h3 className="text-2xl font-bold text-gray-800 mb-3">Détails</h3>
-                    {callDetails ? (
-                        <div className="space-y-2 text-gray-700">
-                            <p><strong>ID de l’appel:</strong> {callDetails.callId}</p>
-                        {callDetails.transcript?.info && (
-                            <div>
-                                <p><strong>Titre:</strong> {callDetails.transcript.info.title}</p>
-                                <p><strong>Icône:</strong> {callDetails.transcript.info.icon}</p>
-                                <p><strong>Description:</strong> {callDetails.transcript.info.description}</p>
-                            </div>
-                        )}
-                            <p><strong>Créé le:</strong> {new Date(callDetails.startedAt).toLocaleString()}</p>
-                            <p><strong>Participants:</strong> {callDetails.participants.join(', ')}</p>
-                            {callDetails.endedAt && (
-                                <p><strong>Terminé le:</strong> {new Date(callDetails.endedAt).toLocaleString()}</p>
-                            )}
-                            <p><strong>Audio:</strong> {callDetails.audioPath ? callDetails.audioPath : 'Non enregistré'}</p>
-                            <div>
-                                <p><strong>Transcription:</strong> {
-                                    !callDetails.audioPath ? 'Aucune transcription' :
-                                    !callDetails.transcript ? 'Aucune transcription' :
-                                    callDetails.transcript.status === 'waiting' ? '⌛ En attente...' :
-                                    callDetails.transcript.status === 'started' ? '🔄 En cours...' :
-                                    callDetails.transcript.status === 'success' ? 
-                                        callDetails.transcript.txtContent || 'Aucune transcription' :
-                                    callDetails.transcript.status === 'error' ? 
-                                        `❌ Erreur: ${callDetails.transcript.error}` :
-                                    'État inconnu'
-                                }</p>
-                            </div>
-
-                            {callDetails.fiche && callDetails.fiche.length > 0 ? (
-                                <div>
-                                    <h4 className="text-lg font-semibold mt-4">Fiches</h4>
-                                    {callDetails.fiche.map((fiche, index) => (
-                                        <div key={index} className="border p-4 rounded-md mb-2">
-                                            {
-                                                isIOS ? (
-                                                    <a
-                                                        href={`${import.meta.env.VITE_API_URL}/${fiche.pdfPath}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        style={{ display: 'inline-block', marginTop: '1rem' }}
-                                                    >
-                                                        📄 Voir le PDF
-                                                    </a>
-                                                ) : (
-                                                    <embed
-                                                        src={`${import.meta.env.VITE_API_URL}/${fiche.pdfPath}`}
-                                                        title={fiche.pdfPath}
-                                                        type="application/pdf"
-                                                        style={{ width: "100%", height: "800px", backgroundColor: "lightslategrey", borderRadius: "0.5rem" }}
-                                                    />
-                                                )
-                                            }
-
-                                            <p><strong>PDF:</strong> {fiche.pdfPath || 'Non disponible'}</p>
-                                            <p><strong>Créé le:</strong> {new Date(fiche.createdAt).toLocaleString()}</p>
-                                            <p><strong>Métadonnées:</strong> {JSON.stringify(fiche.metadata)}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-gray-600 italic">Aucune fiche disponible.</p>
-                            )}
-                        </div>
-                    ) : (
-                        <p className="text-gray-600 italic">Aucun détail disponible.</p>
-                    )}
+                    <Details callDetails={callDetails}/>
+                    <Retranscription callDetails={callDetails}/>
+                    <Fiche callDetails={callDetails}/>
+                    <Enregistrement callDetails={callDetails}/>
                 </>
             )}
 
-            {!joined && (
+            {(!joined && (callDetails && !callDetails.endedAt)) && (
                 <div className="mt-8 pt-8 border-t border-gray-200">
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">{isCreator ? 'Démarrer l’appel' : 'Rejoindre l’appel'}</h2>
                     <button
@@ -393,6 +315,12 @@ export default function CallPage() {
                     </button>
                 </div>
             )}
+            {(!joined && (!isCreator && callDetails && callDetails.endedAt)) && (
+                <div>
+                    L'appel est terminé. Vous ne pouvez pas rejoindre un appel terminé.
+                </div>
+            )}
+
             {joined && (
                 <div className="mt-8 pt-8 border-t border-gray-200">
                     <div className="flex flex-col space-y-4 mb-4">
@@ -412,6 +340,6 @@ export default function CallPage() {
                 </button>
                 </div>
             )}
-        </div>
+        </>
     )
 }
