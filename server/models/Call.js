@@ -25,6 +25,14 @@ const CallSchema = new mongoose.Schema({
             description: { type: String, default: '' }
         }
   },
+  fiche: [{
+    pdfPath: { type: String, default: '' },
+    createdAt: { type: Date, default: Date.now },
+    metadata: {
+      type: Object,
+      default: {}
+    }
+  }],
   participants: [{ type: String }],
 });
 

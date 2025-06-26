@@ -10,7 +10,7 @@ export async function generateMetadata(transcriptionText) {
         analyser la transcription suivante et générer un titre accrocheur, une icône émoji appropriée,
         et une brève description. La transcription concerne un entretien entre une directrice de casting et un(e) candidat(e).
 
-        Répondre uniquement en JSON avec le format suivant:
+        Répondre uniquement en JSON. Pas de formatage Makrdown ! Avec le format suivant:
         {
             "title": "Ex: Casting Chef de cuisinier Junior - Candidat Prometteur",
             "icon": "IMPORTANT: Pour le champ "icon", utilisez UNIQUEMENT UN SEUL émoji, pas de texte additionnel",
