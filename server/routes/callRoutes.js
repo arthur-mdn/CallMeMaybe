@@ -11,6 +11,8 @@ import { dirname } from 'path'
 import { transcribeAudio } from '../services/whisperService.js';
 import mockTranscript from '../services/mockTranscriptService.js';
 import { generateMetadata } from '../services/aiMetadataService.js';
+import { generateFichePDF } from '../services/pdfGenerationService.js';
+import { extractCandidateInfo } from '../services/ficheExtractionService.js';
 import config from '../config.js' 
 
 const __filename = fileURLToPath(import.meta.url)
@@ -105,26 +107,49 @@ router.put('/:callId/audio', verifyToken, upload.single('audio'), async (req, re
         // Do transcription in background
         transcriptionPromise
             .then(async (transcriptText) => {
-            let aiData = {};
-            
-            // Si useAI est true, générer les métadonnées
-           if (call.useAI) {
-                    aiData = await generateMetadata(transcriptText) || {};
+                let aiData = {};
+                let fichePdfPath = null;
+
+                // Si useAI est true, générer les métadonnées
+               if (call.useAI) {
+                    aiData = await generateMetadata(transcriptText) || {}
+               }
+
+                const candidateInfo = await extractCandidateInfo(transcriptText);
+                if (candidateInfo) {
+                    fichePdfPath = await generateFichePDF(candidateInfo, req.params.callId, transcriptText);
                 }
-                await Call.findOneAndUpdate(
-                    { callId: req.params.callId },
-                    { 
+
+                const newFiche = fichePdfPath
+                    ? {
+                        pdfPath: fichePdfPath,
+                        metadata: candidateInfo,
+                        createdAt: new Date()
+                    }
+                    : null;
+
+                const updateOps = {
+                    $set: {
                         transcript: {
                             status: 'success',
                             txtContent: transcriptText || '',
                             error: '',
                             info: aiData
                         }
-                    },
+                    }
+                };
+
+                if (newFiche) {
+                    updateOps.$push = { fiche: newFiche };
+                }
+
+                await Call.findOneAndUpdate(
+                    { callId: req.params.callId },
+                    updateOps,
                     { new: true }
                 );
                 
-                console.log('Transcription saved for call:', req.params.callId);
+                console.log('Transcription and PDF saved for call:', req.params.callId);
             })
             .catch(async (error) => {
                 await Call.findOneAndUpdate(

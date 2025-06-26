@@ -37,6 +37,9 @@ app.use(cookieParser({
 
 app.use(express.json())
 
+app.use(express.static('fiche'));
+app.use(express.static('records'));
+
 // Connexion MongoDB
 db.once('open', function () {
 

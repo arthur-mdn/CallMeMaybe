@@ -31,3 +31,6 @@ dist-ssr
 
 /server/records/*
 !/server/records/.gitkeep
+
+/server/fiche/*
+!/server/fiche/.gitkeep
