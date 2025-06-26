@@ -77,6 +77,17 @@ router.get('/:callId', async (req, res) => {
     }
 })
 
+router.delete('/:callId', verifyToken, async (req, res) => {
+    try {
+        const call = await Call.findOneAndDelete({ callId: req.params.callId })
+        if (!call) return res.status(404).json({ error: 'Appel non trouvé' })
+
+        res.status(200).json({ message: 'Appel supprimé avec succès' })
+    } catch (err) {
+        res.status(500).json({ error: 'Erreur lors de la suppression de l\'appel' })
+    }
+});
+
 router.put('/:callId/audio', verifyToken, upload.single('audio'), async (req, res) => {
     try {
         if (!req.file) {
