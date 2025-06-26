@@ -16,7 +16,9 @@
 }
 
 #root {
-  width: 100%;
+  width: 100vw;
+    height: 100vh;
+    padding: 2rem;
 }
 
 a {
@@ -41,15 +43,20 @@ h1 {
 }
 
 button {
+  display: flex;
+  flex-direction: row;
   border-radius: 8px;
   border: 1px solid transparent;
-  padding: 0.6em 1.2em;
+  padding: 0.8rem 2rem;
+  align-items: center;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
   background-color: #397A99;
   cursor: pointer;
   transition: border-color 0.25s;
+    width: 100%;
+    justify-content: center;
 }
 button:hover {
   border-color: #646cff;
@@ -104,6 +111,9 @@ button:focus-visible {
 .w100 {
     width: 100%;
 }
+.h100 {
+    height: 100%;
+}
 
 .login_form {
   max-width: 447px;
@@ -112,15 +122,63 @@ button:focus-visible {
 .login_form_container {
     position: relative;
     z-index: 2;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .login_form_container img {
     position: absolute;
     width: 8rem;
     height: auto;
     z-index: -5;
-    top: -10%;
+    top: 24%;
     left: 51%;
     transform: translate(-50%, -50%);
     scale: -1 1;
-
 }
+
+.call-list {
+    justify-content: flex-start;
+}
+
+.call-list ul{
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.call-list ul .item{
+    border: 2px solid #E8F2F5;
+    border-radius: 0.5rem;
+    padding: 1rem 1rem;
+    display: flex; gap: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+.call-list ul .item .time{
+    position: absolute;
+    right: 0.5rem;
+}
+.call-list ul .item h3{
+    max-width: 60%;
+}
+.call-list ul .item .description{
+    max-width: 85%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.call-list ul .item .icon{
+    width: 3rem;
+    height: 3rem;
+    flex-shrink: 0;
+    border-radius: 5rem;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    background-color: #E8F2F5;
+    font-size: 1.4rem;
+}
+

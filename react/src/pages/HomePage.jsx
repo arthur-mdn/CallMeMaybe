@@ -22,11 +22,17 @@ export default function HomePage() {
     }, [navigate]);
 
     return (
-        <>
+        <div className={"fr g1 h100"}>
             <CallList calls={calls} />
-            <div>
-                Bonjour
+            <div className={"box fr"} style={{alignSelf:'flex-start', overflow:'hidden'}}>
+                <div>
+                    <h2 className="text-2xl font-bold">Bonjour</h2>
+                    <p>
+                        Bienvenue sur ton tableau de bord. Tu peux y retrouver toutes tes anciennes conversations et en démarrer une nouvelle !
+                    </p>
+                </div>
+                <img src="/ia-bot.png" alt="IA Bot" style={{width:"5rem", alignSelf:"end", marginBottom: "-3.5rem", marginRight: '-0.5rem', scale:'-1 1'}}/>
             </div>
-        </>
+        </div>
     )
 }

@@ -60,7 +60,7 @@ router.post('/', verifyToken, async (req, res) => {
 
 router.get('/', verifyToken, async (req, res) => {
     try {
-        const calls = await Call.find({});
+        const calls = await Call.find({}).sort({ startedAt: -1 });
         res.status(200).json(calls)
     } catch (err) {
         res.status(500).json({ error: 'Erreur lors de la récupération des appels' })
