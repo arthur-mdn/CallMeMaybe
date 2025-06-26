@@ -6,7 +6,7 @@ export default function Fiche({ callDetails }) {
     }
 
     return (
-        <div className={"box"}>
+        <div className={"box jc-fs mw500"}>
             {callDetails.fiche && callDetails.fiche.length > 0 ? (
                 <div className={"fc g0-5"}>
                     <h2 className="text-2xl font-bold">Fiche client</h2>
@@ -32,9 +32,9 @@ export default function Fiche({ callDetails }) {
                                 )
                             }
 
-                            <p><strong>PDF:</strong> {fiche.pdfPath || 'Non disponible'}</p>
+                            {/*<p><strong>PDF:</strong> {fiche.pdfPath || 'Non disponible'}</p>*/}
                             <p><strong>Créé le:</strong> {new Date(fiche.createdAt).toLocaleString()}</p>
-                            <p><strong>Métadonnées:</strong> {JSON.stringify(fiche.metadata)}</p>
+                            {/*<p><strong>Métadonnées:</strong> {JSON.stringify(fiche.metadata)}</p>*/}
                         </div>
                     ))}
                 </div>

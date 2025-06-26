@@ -9,6 +9,7 @@ import Retranscription from "../components/CallPage/Retranscription.jsx";
 import Fiche from "../components/CallPage/Fiche.jsx";
 import Enregistrement from "../components/CallPage/Enregistrement.jsx";
 import FeatherIcon from "feather-icons-react";
+import CallWidget from "../components/CallPage/CallWidget.jsx";
 
 export default function CallPage() {
     const { callId } = useParams()
@@ -16,7 +17,6 @@ export default function CallPage() {
     const [callDetails, setCallDetails] = useState(null)
     const isCreator = authStatus === 'authenticated'
     const [localStream, setLocalStream] = useState(null)
-    const localAudioRef = useRef()
     const peerConnections = useRef({})
     const [remoteStreams, setRemoteStreams] = useState([])
 
@@ -62,10 +62,14 @@ export default function CallPage() {
 
     const handleHangUp = () => {
         if (isCreator) {
-                socket.emit('end-call', { callId })
-            } else {
-                socket.emit('leave-call', { callId })
-            }
+            socket.emit('end-call', { callId })
+        } else {
+            socket.emit('leave-call', { callId })
+            setCallDetails(prev => ({
+                ...prev,
+                endedAt: new Date().toISOString()
+            }));
+        }
         cleanup()
     }
 
@@ -117,11 +121,8 @@ export default function CallPage() {
 
                 console.log('Audio uploaded successfully');
                 console.log('Server response:', response.data);
-                setCallDetails(prev => ({
-                    ...prev,
-                    audioPath: response.data.call.audioPath || prev.audioPath,
-                    transcript: response.data.call.transcript || prev.transcript
-                }));
+                setCallDetails( response.data.call );
+
                 // set interval to check if transcription is ready
                 const checkTranscription = setInterval(async () => {
                     try {
@@ -210,7 +211,6 @@ export default function CallPage() {
             video: false
         })
         setLocalStream(stream)
-        localAudioRef.current.srcObject = stream
 
         // fetch TURN credentials
         const response = await fetch(
@@ -248,10 +248,17 @@ export default function CallPage() {
         })
 
         socket.on('answer', async ({ from, answer }) => {
-            const pc = peerConnections.current[from]
-            await pc.setRemoteDescription(new RTCSessionDescription(answer))
-        })
-
+            const pc = peerConnections.current[from];
+            if (!pc) return;
+            const validStates = ['have-local-offer', 'have-remote-offer'];
+            if (validStates.includes(pc.signalingState)) {
+                try {
+                    await pc.setRemoteDescription(new RTCSessionDescription(answer));
+                } catch (err) {
+                    console.warn("Erreur setRemoteDescription :", err);
+                }
+            }
+        });
 
         socket.on('call-details', ({ call }) => {
             console.log('Détails de l’appel:', call)
@@ -311,58 +318,82 @@ export default function CallPage() {
                             )}
                         </div>
                     </div>
-                    <div className={"fc g1"}>
+                    <div className={"fc g1 h100 mh90"}>
                         <Details callDetails={callDetails}/>
-                        <div className={"fr g1"}>
-                            <Fiche callDetails={callDetails}/>
-                            <div className={"fc g1 "}>
-                                <Enregistrement callDetails={callDetails}/>
+                        {(callDetails && !callDetails.endedAt) && (
+                            <div className={"fr g1 mta"}>
+                                <CallWidget
+                                    isCreator={isCreator}
+                                    joined={joined}
+                                    callDetails={callDetails}
+                                    onJoin={joinCall}
+                                    onHangUp={handleHangUp}
+                                    localStream={localStream}
+                                    remoteStreams={remoteStreams}
+                                />
                                 <Retranscription callDetails={callDetails}/>
                             </div>
-                        </div>
-
-
-
+                        )}
+                        {(callDetails && callDetails.endedAt) && (
+                            <div className={"fr g1"}>
+                                <Fiche callDetails={callDetails}/>
+                                <div className={"fc g1 "}>
+                                    <Enregistrement callDetails={callDetails}/>
+                                    <Retranscription callDetails={callDetails}/>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </>
             )}
-
-            {(!joined && (callDetails && !callDetails.endedAt)) && (
-                <div className="mt-8 pt-8 border-t border-gray-200">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-4">{isCreator ? 'Démarrer l’appel' : 'Rejoindre l’appel'}</h2>
-                    <button
-                        onClick={joinCall}
-                        className="px-8 py-3 bg-green-600 text-white text-lg font-semibold rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition ease-in-out duration-150"
-                    >
-                        {isCreator ? 'Démarrer' : 'Rejoindre'}
-                    </button>
-                </div>
-            )}
-            {(!joined && (!isCreator && callDetails && callDetails.endedAt)) && (
-                <div>
-                    L'appel est terminé. Vous ne pouvez pas rejoindre un appel terminé.
-                </div>
+            {!isCreator && (
+                <CallWidget
+                    isCreator={isCreator}
+                    joined={joined}
+                    callDetails={callDetails}
+                    onJoin={joinCall}
+                    onHangUp={handleHangUp}
+                    localStream={localStream}
+                    remoteStreams={remoteStreams}
+                />
             )}
 
-            {joined && (
-                <div className="mt-8 pt-8 border-t border-gray-200">
-                    <div className="flex flex-col space-y-4 mb-4">
-                        <audio ref={localAudioRef} autoPlay muted controls style={{display:'none'}}/>
-                        {remoteStreams.map(r => (
-                            <audio
-                                key={r.socketId}
-                                autoPlay
-                                controls
-                                ref={el => el && (el.srcObject = r.stream)}
-                                className="w-full rounded-md shadow-sm"
-                            />
-                        ))}
-                    </div>
-                    <button onClick={handleHangUp} className="mt-4 px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                    {isCreator ? 'Terminer l’appel' : 'Quitter l’appel'}
-                </button>
-                </div>
-            )}
+            {/*{(!joined && (callDetails && !callDetails.endedAt)) && (*/}
+            {/*    <div className="mt-8 pt-8 border-t border-gray-200">*/}
+            {/*        <h2 className="text-2xl font-bold text-gray-800 mb-4">{isCreator ? 'Démarrer l’appel' : 'Rejoindre l’appel'}</h2>*/}
+            {/*        <button*/}
+            {/*            onClick={joinCall}*/}
+            {/*            className="px-8 py-3 bg-green-600 text-white text-lg font-semibold rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition ease-in-out duration-150"*/}
+            {/*        >*/}
+            {/*            {isCreator ? 'Démarrer' : 'Rejoindre'}*/}
+            {/*        </button>*/}
+            {/*    </div>*/}
+            {/*)}*/}
+            {/*{(!joined && (!isCreator && callDetails && callDetails.endedAt)) && (*/}
+            {/*    <div>*/}
+            {/*        L'appel est terminé. Vous ne pouvez pas rejoindre un appel terminé.*/}
+            {/*    </div>*/}
+            {/*)}*/}
+
+            {/*{joined && (*/}
+            {/*    <div className="mt-8 pt-8 border-t border-gray-200">*/}
+            {/*        <div className="flex flex-col space-y-4 mb-4">*/}
+            {/*            <audio ref={localAudioRef} autoPlay muted controls style={{display:'none'}}/>*/}
+            {/*            {remoteStreams.map(r => (*/}
+            {/*                <audio*/}
+            {/*                    key={r.socketId}*/}
+            {/*                    autoPlay*/}
+            {/*                    controls*/}
+            {/*                    ref={el => el && (el.srcObject = r.stream)}*/}
+            {/*                    className="w-full rounded-md shadow-sm"*/}
+            {/*                />*/}
+            {/*            ))}*/}
+            {/*        </div>*/}
+            {/*        <button onClick={handleHangUp} className="mt-4 px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">*/}
+            {/*        {isCreator ? 'Terminer l’appel' : 'Quitter l’appel'}*/}
+            {/*    </button>*/}
+            {/*    </div>*/}
+            {/*)}*/}
         </>
     )
 }

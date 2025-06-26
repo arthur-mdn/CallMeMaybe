@@ -10,7 +10,7 @@ export default function CallList({ calls }) {
         <div className="box call-list g1">
             <h2 className="text-2xl font-bold">Historique des appels</h2>
             {calls.length > 0 ? (
-                <ul>
+                <ul style={{maxHeight:'100%', overflowY:'scroll'}}>
                     {calls.map(call => (
                         <Link to={`/room/${call.callId}`} className="item" key={call.callId}>
                             <div className={"icon"}>

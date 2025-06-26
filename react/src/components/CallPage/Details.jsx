@@ -22,10 +22,10 @@ export default function Details({ callDetails }) {
                 <div className={"fc g1"}>
                     <div className="fr g1">
                         <div className="icon">
-                            {callDetails.transcript.info.icon || "🏔"}
+                            {(callDetails && callDetails.transcript && callDetails.transcript.info && callDetails.transcript.info.icon) ? callDetails.transcript.info.icon : "🏔"}
                         </div>
                         <div className="fc">
-                            <h2 className="text-2xl font-bold">{callDetails.transcript.info.title || `#${callDetails.callId}`}</h2>
+                            <h2 className="text-2xl font-bold">{(callDetails && callDetails.transcript && callDetails.transcript.info && callDetails.transcript.info.title) ? callDetails.transcript.info.title : `#${callDetails.callId}`}</h2>
                             <p>{new Date(callDetails.startedAt).toLocaleString()} {callDetails.endedAt && ( `à ${new Date(callDetails.endedAt).toLocaleString()}`)}</p>
                         </div>
                         <div className="mla">
@@ -37,7 +37,7 @@ export default function Details({ callDetails }) {
                             </button>
                         </div>
                     </div>
-                    {callDetails.transcript.info.description ? (<p>{callDetails.transcript.info.description}</p>) : (<></>)}
+                    {(callDetails && callDetails.transcript && callDetails.transcript.info && callDetails.transcript.info.description) ? (<p>{callDetails.transcript.info.description}</p>) : (<></>)}
                 </div>
             ) : (
                 <p className="text-gray-600 italic">Aucun détail disponible.</p>
