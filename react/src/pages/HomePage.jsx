@@ -1,19 +1,32 @@
-import { Link } from 'react-router-dom'
+import {Link, useNavigate} from 'react-router-dom'
+import {useEffect, useState} from "react";
+import axios from "axios";
+import CallList from "../components/HomePageAdmin/CallList.jsx";
 
 export default function HomePage() {
+    const [calls, setCalls] = useState([]);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const getCalls = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/calls/`, { withCredentials: true });
+                if (response.status === 200) {
+                    setCalls(response.data);
+                }
+            } catch (error) {
+                console.error('Erreur lors de la vérification de l’appel:', error);
+            }
+        };
+        getCalls();
+    }, [navigate]);
+
     return (
-        <div style={{ textAlign: 'center', marginTop: '4rem' }}>
-            <h1>Bienvenue</h1>
-            <div style={{ margin: '1rem' }}>
-                <Link to="/login">
-                    <button style={{ padding: '1rem 2rem' }}>Admin Login</button>
-                </Link>
+        <>
+            <CallList calls={calls} />
+            <div>
+                Bonjour
             </div>
-            <div style={{ margin: '1rem' }}>
-                <Link to="/join">
-                    <button style={{ padding: '1rem 2rem' }}>Rejoindre un appel</button>
-                </Link>
-            </div>
-        </div>
+        </>
     )
 }
