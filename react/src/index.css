@@ -107,6 +107,12 @@ button:focus-visible {
 .ai-c {
     align-items: center;
 }
+.jc-sb{
+    justify-content: space-between;
+}
+.mla{
+    margin-left: auto;
+}
 .w100 {
     width: 100%;
 }
@@ -170,7 +176,7 @@ button:focus-visible {
     text-overflow: ellipsis;
 }
 
-.call-list ul .item .icon{
+.icon{
     width: 3rem;
     height: 3rem;
     flex-shrink: 0;
@@ -180,5 +186,42 @@ button:focus-visible {
     display: flex;
     background-color: #E8F2F5;
     font-size: 1.4rem;
+}
+
+.call-id {
+    background-color: #737377;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    color: white;
+    font-weight: bold;
+}
+
+.special-button{
+    aspect-ratio: 1/1;
+    width: 3.5rem;
+    padding: 0;
+    border-radius: 50px;
+    background-color: white;
+    border: 2px solid #E8F2F5;
+}
+
+.modale {
+    /* background-color: aqua; */
+    width: 500px;
+    position: absolute;
+    top: 12.5rem;
+    right: 4rem;
+    box-shadow: rgba(0, 0, 0, 0.05) 0px 4px 12px;
+    border-radius: 8px;
+    border: 2px solid #E8F2F5;
+
+}
+#share_link_button{
+    aspect-ratio: 1 / 1;
+    width: 40px;
+    height: 40px;
+    color: white;
+    padding: 0.6rem;
+    transition: 0.2s all;
 }
 

@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { useParams } from 'react-router-dom'
+import {Link, useParams} from 'react-router-dom'
 import socket from '../socket'
 import {useAuth} from "../../AuthContext.jsx";
 import axios from "axios";
@@ -8,6 +8,7 @@ import Details from "../components/CallPage/Details.jsx";
 import Retranscription from "../components/CallPage/Retranscription.jsx";
 import Fiche from "../components/CallPage/Fiche.jsx";
 import Enregistrement from "../components/CallPage/Enregistrement.jsx";
+import FeatherIcon from "feather-icons-react";
 
 export default function CallPage() {
     const { callId } = useParams()
@@ -297,10 +298,32 @@ export default function CallPage() {
         <>
             {isCreator && (
                 <>
-                    <Details callDetails={callDetails}/>
-                    <Retranscription callDetails={callDetails}/>
-                    <Fiche callDetails={callDetails}/>
-                    <Enregistrement callDetails={callDetails}/>
+                    <div className={"fr jc-sb mb-8 ai-c"}>
+                        <Link to={'/'} className={"text-blue-600 hover:underline fr ai-c g0-5"}>
+                            <FeatherIcon icon={"arrow-left"} size={16} className="inline mr-1"/>
+                            Retour à la page d'accueil
+                        </Link>
+                        <div className="call-id">
+                            {callDetails ? (
+                                `#${callDetails.callId}`
+                            ) : (
+                                `#`
+                            )}
+                        </div>
+                    </div>
+                    <div className={"fc g1"}>
+                        <Details callDetails={callDetails}/>
+                        <div className={"fr g1"}>
+                            <Fiche callDetails={callDetails}/>
+                            <div className={"fc g1 "}>
+                                <Enregistrement callDetails={callDetails}/>
+                                <Retranscription callDetails={callDetails}/>
+                            </div>
+                        </div>
+
+
+
+                    </div>
                 </>
             )}
 

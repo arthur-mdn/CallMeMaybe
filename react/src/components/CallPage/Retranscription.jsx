@@ -4,8 +4,8 @@ export default function Retranscription({ callDetails }) {
     }
 
     const renderTranscript = () => {
-        if (!callDetails.audioPath) return 'Aucune transcription';
-        if (!callDetails.transcript) return 'Aucune transcription';
+        if (!callDetails.audioPath) return "La retranscription sera disponible une fois l'appel terminé";
+        if (!callDetails.transcript) return "La retranscription sera disponible une fois l'appel terminé";
 
         switch (callDetails.transcript.status) {
             case 'waiting':
@@ -22,8 +22,9 @@ export default function Retranscription({ callDetails }) {
     };
 
     return (
-        <div className="box">
-            <p><strong>Transcription:</strong> {renderTranscript()}</p>
+        <div className="box fc g0-5">
+            <h2 className="text-2xl font-bold">Retranscription</h2>
+            <p>{renderTranscript()}</p>
         </div>
     );
 }

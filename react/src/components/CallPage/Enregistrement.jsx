@@ -5,8 +5,9 @@ export default function Enregistrement({ callDetails }) {
     }
 
     return (
-        <div className={"box"}>
-            <p><strong>Audio:</strong> {callDetails.audioPath ? callDetails.audioPath : 'Non enregistré'}</p>
+        <div className={"box fc g0-5"}>
+            <h2 className="text-2xl font-bold">Enregistrement</h2>
+            <p>{callDetails.audioPath ? callDetails.audioPath : 'Non enregistré'}</p>
         </div>
     );
 }

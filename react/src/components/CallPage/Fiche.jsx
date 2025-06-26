@@ -8,8 +8,8 @@ export default function Fiche({ callDetails }) {
     return (
         <div className={"box"}>
             {callDetails.fiche && callDetails.fiche.length > 0 ? (
-                <div>
-                    <h4 className="text-lg font-semibold mt-4">Fiches</h4>
+                <div className={"fc g0-5"}>
+                    <h2 className="text-2xl font-bold">Fiche client</h2>
                     {callDetails.fiche.map((fiche, index) => (
                         <div key={index} className="border p-4 rounded-md mb-2">
                             {
