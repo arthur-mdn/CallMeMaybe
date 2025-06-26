@@ -24,9 +24,9 @@ export default function HomePage() {
     return (
         <div className={"fr g1 h100"}>
             <CallList calls={calls} />
-            <div className={"box fr"} style={{alignSelf:'flex-start', overflow:'hidden'}}>
+            <div className={"box fr"} style={{alignSelf:'flex-start', overflow:'hidden', justifyContent:'space-between'}}>
                 <div>
-                    <h2 className="text-2xl font-bold">Bonjour</h2>
+                    <h2 className="text-2xl font-bold">Bonjour !</h2>
                     <p>
                         Bienvenue sur ton tableau de bord. Tu peux y retrouver toutes tes anciennes conversations et en démarrer une nouvelle !
                     </p>
