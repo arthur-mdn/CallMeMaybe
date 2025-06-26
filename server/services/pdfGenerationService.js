@@ -9,7 +9,8 @@ const __dirname = dirname(__filename);
 
 export async function generateFichePDF(candidateInfo, callId, customData) {
     try {
-        const pdfPath = path.join(__dirname, '../fiche', `fiche-${callId}.pdf`);
+        const fileName = `fiche-${callId}-` + Math.random().toString(36).substring(2, 9) + '.pdf'
+        const pdfPath = path.join(__dirname, '../fiche', fileName);
         
         // PATHS FOR ASSETS
         const fontRegular = path.join(__dirname, 'fonts', 'OpenSans-Regular.ttf');
@@ -131,7 +132,7 @@ export async function generateFichePDF(candidateInfo, callId, customData) {
 
         doc.end();
 
-        return `fiche-${callId}.pdf`;
+        return fileName;
     } catch (error) {
         console.error('Error generating PDF:', error);
         throw error;
