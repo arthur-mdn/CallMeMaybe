@@ -7,7 +7,7 @@
 
   color-scheme: light dark;
   color: rgba(0, 0, 0, 0.87);
-  background-color: white;
+  background-color: #F3F3F8;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -47,7 +47,7 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: #397A99;
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -81,4 +81,46 @@ button:focus-visible {
     padding: 2em;
     border-radius: 8px;
     box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+  background-color: white;
+}
+
+.g0-5 {
+  gap: 0.5rem;
+}
+.g1 {
+  gap: 1rem;
+}
+.fc {
+ display: flex;
+  flex-direction: column;
+}
+.fr {
+    display: flex;
+    flex-direction: row;
+}
+.ai-c {
+    align-items: center;
+}
+.w100 {
+    width: 100%;
+}
+
+.login_form {
+  max-width: 447px;
+}
+
+.login_form_container {
+    position: relative;
+    z-index: 2;
+}
+.login_form_container img {
+    position: absolute;
+    width: 8rem;
+    height: auto;
+    z-index: -5;
+    top: -10%;
+    left: 51%;
+    transform: translate(-50%, -50%);
+    scale: -1 1;
+
 }

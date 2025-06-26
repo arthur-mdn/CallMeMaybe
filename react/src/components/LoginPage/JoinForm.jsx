@@ -77,10 +77,11 @@ export default function JoinForm() {
     };
 
     return (
-        <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Entrez l’ID de l’appel</h2>
+        <div className={"fc g0-5"}>
+            <h2 className="text-2xl font-bold">Continuez en tant qu'invité</h2>
+            <p>Rejoignez un appel sans créer de compte</p>
             {errorMessage && <div className="text-red-600 font-bold mb-4">{errorMessage}</div>}
-            <div className="flex gap-2 justify-center mb-6" onPaste={handlePaste}>
+            <div className="flex gap-2 justify-center w100" onPaste={handlePaste}>
                 {values.map((char, i) => (
                     <input
                         key={i}

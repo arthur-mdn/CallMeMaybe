@@ -34,26 +34,23 @@ export default function LoginForm() {
     }
 
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="max-w-sm mx-auto mt-16 p-6 bg-white rounded-lg shadow-md text-center"
-        >
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Admin Login</h2>
-            {errorMessage && <div className="text-red-600 font-bold mb-4">{errorMessage}</div>}
+        <form onSubmit={handleSubmit} className={"fc g0-5"}>
+            <h2 className="text-2xl font-bold">Se connecter</h2>
+            {errorMessage && <div className="text-red-600 font-bold">{errorMessage}</div>}
             <input
-                placeholder="Username"
+                placeholder="Nom d'utilisateur"
                 value={login.username}
                 onChange={e => setLogin({...login, username: e.target.value})}
                 required
-                className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+                className="w-full px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
             />
             <input
                 type="password"
-                placeholder="Password"
+                placeholder="Mot de passe"
                 value={login.password}
                 onChange={e => setLogin({...login, password: e.target.value})}
                 required
-                className="w-full px-4 py-2 mb-6 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
             />
             <button
                 type="submit"
