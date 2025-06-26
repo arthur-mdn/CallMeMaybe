@@ -336,7 +336,7 @@ export default function CallPage() {
                         )}
                         {(callDetails && callDetails.endedAt) && (
                             <div className={"fr g1"}>
-                                <Fiche callDetails={callDetails}/>
+                                <Fiche callDetails={callDetails} setCallDetails={setCallDetails}/>
                                 <div className={"fc g1 "}>
                                     <Enregistrement callDetails={callDetails}/>
                                     <Retranscription callDetails={callDetails}/>

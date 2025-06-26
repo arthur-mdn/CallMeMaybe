@@ -364,3 +364,29 @@ button.call.end{
     background-color: #BF7375;
 
 }
+
+
+.file-loader {
+    display: flex;
+    margin: auto;
+    flex-direction: column;
+}
+
+.loader__title {
+    text-align: center;
+    margin-top: 32px;
+}
+
+.loader__surface {
+    position: relative;
+    width: 60px;
+    height: 72px;
+}
+
+.loader__square {
+    width: 12px;
+    height: 12px;
+    position: absolute;
+    background-color: #000;
+    transition: 300ms ease-out all;
+}
