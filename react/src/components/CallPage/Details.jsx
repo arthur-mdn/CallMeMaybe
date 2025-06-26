@@ -28,14 +28,14 @@ export default function Details({ callDetails }) {
                             <h2 className="text-2xl font-bold">{(callDetails && callDetails.transcript && callDetails.transcript.info && callDetails.transcript.info.title) ? callDetails.transcript.info.title : `#${callDetails.callId}`}</h2>
                             <p>{new Date(callDetails.startedAt).toLocaleString()} {callDetails.endedAt && ( `à ${new Date(callDetails.endedAt).toLocaleString()}`)}</p>
                         </div>
-                        <div className="mla">
-                        <button
+                        {(callDetails && !callDetails.endedAt) ? <div className="mla">
+                            <button
                                 className="special-button"
                                 onClick={() => setIsShareOpen(prev => !prev)}
                             >
-                                <FeatherIcon icon="share-2" />
+                                <FeatherIcon icon="share-2"/>
                             </button>
-                        </div>
+                        </div> : <></>}
                     </div>
                     {(callDetails && callDetails.transcript && callDetails.transcript.info && callDetails.transcript.info.description) ? (<p>{callDetails.transcript.info.description}</p>) : (<></>)}
                 </div>
