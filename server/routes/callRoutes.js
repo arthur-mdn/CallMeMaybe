@@ -13,7 +13,13 @@ import mockTranscript from '../services/mockTranscriptService.js';
 import { generateMetadata } from '../services/aiMetadataService.js';
 import { generateFichePDF } from '../services/pdfGenerationService.js';
 import { extractCandidateInfo } from '../services/ficheExtractionService.js';
-import config from '../config.js' 
+import config from '../config.js'
+
+import fs from 'fs/promises';
+import ffmpeg from 'fluent-ffmpeg';
+import ffmpegPath from 'ffmpeg-static';
+
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -94,16 +100,44 @@ router.put('/:callId/audio', verifyToken, upload.single('audio'), async (req, re
             return res.status(400).json({ error: 'Aucun fichier audio fourni' })
         }
 
+        const inputPath = req.file.path;
+        const outputFilename = req.file.filename.replace(/\.(webm|ogg|wav)$/, '.mp3');
+        const outputPath = path.join('records', outputFilename);
+
+        try {
+            await new Promise((resolve, reject) => {
+                ffmpeg(inputPath)
+                    .toFormat('mp3')
+                    .audioCodec('libmp3lame')
+                    .on('error', err => {
+                        reject(new Error(`Erreur FFmpeg: ${err.message}`));
+                    })
+                    .on('end', resolve)
+                    .save(outputPath);
+            });
+
+        } catch (error) {
+            console.error("Erreur générale:", error.message);
+
+            await fs.unlink(inputPath).catch(() => {});
+            await fs.unlink(outputPath).catch(() => {});
+
+            return res.status(500).json({
+                error: "Une erreur est survenue lors de la conversion de l’audio.",
+                details: error.message
+            });
+        }
+
+
         const call = await Call.findOne({ callId: req.params.callId })
         if (!call) {
             return res.status(404).json({ 
                 error: 'Appel non trouvé',
-                savedAudioPath: req.file.filename
+                savedAudioPath: outputFilename
             })
         }
 
-        // Save audio path and set transcript status to waiting
-        call.audioPath = req.file.filename
+        call.audioPath = outputFilename;
         call.transcript = {
             status: 'waiting',
             txtContent: '',
