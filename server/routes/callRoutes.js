@@ -138,6 +138,7 @@ router.put('/:callId/audio', verifyToken, upload.single('audio'), async (req, re
         }
 
         call.audioPath = outputFilename;
+        call.endedAt = new Date();
         call.transcript = {
             status: 'waiting',
             txtContent: '',
