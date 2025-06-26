@@ -3,7 +3,7 @@ services:
     build:
       context: ./react
       dockerfile: Dockerfile.dev
-    command: npm run dev -- --port 5174 --host 0.0.0.0
+    command: sh -c "npm install && npm run dev -- --port 5174 --host 0.0.0.0"
     volumes:
       - ./react:/app
       - react_node_modules:/app/node_modules
@@ -16,7 +16,7 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    command: nodemon server.js
+    command: sh -c "npm install && nodemon server.js"
     volumes:
       - ./server:/app
       - server_node_modules:/app/node_modules
