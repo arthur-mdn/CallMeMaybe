@@ -38,11 +38,11 @@ export default function LoginForm() {
             <h2 className="text-2xl font-bold">Se connecter</h2>
             {errorMessage && <div className="text-red-600 font-bold">{errorMessage}</div>}
             <input
+                type={"text"}
                 placeholder="Nom d'utilisateur"
                 value={login.username}
                 onChange={e => setLogin({...login, username: e.target.value})}
                 required
-                className="w-full px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
             />
             <input
                 type="password"
@@ -50,7 +50,6 @@ export default function LoginForm() {
                 value={login.password}
                 onChange={e => setLogin({...login, password: e.target.value})}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
             />
             <button
                 type="submit"

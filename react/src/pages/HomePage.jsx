@@ -1,11 +1,9 @@
-import {Link, useNavigate} from 'react-router-dom'
 import {useEffect, useState} from "react";
 import axios from "axios";
 import CallList from "../components/HomePageAdmin/CallList.jsx";
 
 export default function HomePage() {
     const [calls, setCalls] = useState([]);
-    const navigate = useNavigate();
 
     useEffect(() => {
         const getCalls = async () => {
@@ -19,7 +17,7 @@ export default function HomePage() {
             }
         };
         getCalls();
-    }, [navigate]);
+    }, []);
 
     return (
         <div className={"fr g1 h100"}>

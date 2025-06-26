@@ -7,10 +7,11 @@ import HomePage from "./pages/HomePage.jsx";
 
 const AuthenticatedApp = () => {
     const {authStatus} = useAuth();
+    console.log(authStatus)
     return (
         <BrowserRouter>
             <Routes>
-                {authStatus === "unauthenticated" ? (
+                {(authStatus === "unauthenticated" || authStatus === "loading") ? (
                     <>
                         {/* Routes publiques */}
                         <Route path="/login" element={<LoginPage/>}/>
