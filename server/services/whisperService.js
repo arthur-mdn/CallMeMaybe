@@ -1,6 +1,11 @@
 import OpenAI from 'openai'
 import fs from 'fs'
-import config from '../config.js' 
+import config from '../config.js'
+import { File } from 'node:buffer';
+
+if (!globalThis.File) {
+    globalThis.File = File;
+}
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
