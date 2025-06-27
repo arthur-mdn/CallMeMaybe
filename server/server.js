@@ -9,6 +9,7 @@ import { Server } from 'socket.io'
 import initSocket from './socket/initSocket.js'
 import callRoutes from './routes/callRoutes.js'
 import authRoutes from "./routes/authRoutes.js";
+import configRoutes from "./routes/configRoutes.js";
 
 const app = express()
 const server = http.createServer(app)
@@ -53,6 +54,7 @@ initSocket(io)
 // Routes API
 app.use('/api/auth', authRoutes)
 app.use('/api/calls', callRoutes)
+app.use('/api/config', configRoutes)
 
 server.listen(process.env.PORT || 5001, () => {
     console.log('Serveur en ligne')
