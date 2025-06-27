@@ -57,6 +57,8 @@ export default function initSocket(io) {
         })
 
         socket.on('end-call', async ({ callId }) => {
+
+            console.log('end-call')
             const call = await Call.findOne({ callId })
 
             io.to(callId).emit('call-ended')
@@ -79,10 +81,11 @@ export default function initSocket(io) {
                 await Call.findOneAndUpdate(
                     { callId: room },
                     {
-                        $pull: { participants: socket.id },
-                        $set: { endedAt: new Date() }
+                        $pull: { participants: socket.id }
                     }
                 )
+
+                // if there is nobody in the room, set endedAt to now
 
                 socket.to(room).emit('participant-left', { socketId: socket.id });
                 broadcastParticipants(room)

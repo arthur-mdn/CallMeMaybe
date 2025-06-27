@@ -13,7 +13,19 @@ import mockTranscript from '../services/mockTranscriptService.js';
 import { generateMetadata } from '../services/aiMetadataService.js';
 import { generateFichePDF } from '../services/pdfGenerationService.js';
 import { extractCandidateInfo } from '../services/ficheExtractionService.js';
-import config from '../config.js' 
+import config from '../config.js'
+
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+});
+
+import fs from 'fs/promises';
+import ffmpeg from 'fluent-ffmpeg';
+import ffmpegPath from 'ffmpeg-static';
+
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -60,7 +72,7 @@ router.post('/', verifyToken, async (req, res) => {
 
 router.get('/', verifyToken, async (req, res) => {
     try {
-        const calls = await Call.find({});
+        const calls = await Call.find({}).sort({ startedAt: -1 });
         res.status(200).json(calls)
     } catch (err) {
         res.status(500).json({ error: 'Erreur lors de la récupération des appels' })
@@ -77,22 +89,62 @@ router.get('/:callId', async (req, res) => {
     }
 })
 
+router.delete('/:callId', verifyToken, async (req, res) => {
+    try {
+        const call = await Call.findOneAndDelete({ callId: req.params.callId })
+        if (!call) return res.status(404).json({ error: 'Appel non trouvé' })
+
+        res.status(200).json({ message: 'Appel supprimé avec succès' })
+    } catch (err) {
+        res.status(500).json({ error: 'Erreur lors de la suppression de l\'appel' })
+    }
+});
+
 router.put('/:callId/audio', verifyToken, upload.single('audio'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'Aucun fichier audio fourni' })
         }
 
+        const inputPath = req.file.path;
+        const outputFilename = req.file.filename.replace(/\.(webm|ogg|wav)$/, '.mp3');
+        const outputPath = path.join('records', outputFilename);
+
+        try {
+            await new Promise((resolve, reject) => {
+                ffmpeg(inputPath)
+                    .toFormat('mp3')
+                    .audioCodec('libmp3lame')
+                    .on('error', err => {
+                        reject(new Error(`Erreur FFmpeg: ${err.message}`));
+                    })
+                    .on('end', resolve)
+                    .save(outputPath);
+            });
+
+        } catch (error) {
+            console.error("Erreur générale:", error.message);
+
+            await fs.unlink(inputPath).catch(() => {});
+            await fs.unlink(outputPath).catch(() => {});
+
+            return res.status(500).json({
+                error: "Une erreur est survenue lors de la conversion de l’audio.",
+                details: error.message
+            });
+        }
+
+
         const call = await Call.findOne({ callId: req.params.callId })
         if (!call) {
             return res.status(404).json({ 
                 error: 'Appel non trouvé',
-                savedAudioPath: req.file.filename
+                savedAudioPath: outputFilename
             })
         }
 
-        // Save audio path and set transcript status to waiting
-        call.audioPath = req.file.filename
+        call.audioPath = outputFilename;
+        call.endedAt = new Date();
         call.transcript = {
             status: 'waiting',
             txtContent: '',
@@ -172,6 +224,108 @@ router.put('/:callId/audio', verifyToken, upload.single('audio'), async (req, re
     } catch (err) {
         res.status(500).json({ error: 'Erreur lors de l\'enregistrement de l\'audio',savedAudioPath: req.file?.filename})
     }
-})
+});
+
+router.post('/:callId/chat', verifyToken, async (req, res) => {
+    try {
+        const { message } = req.body;
+        if (!message || typeof message !== 'string') {
+            return res.status(400).json({ error: 'Message invalide' });
+        }
+
+        const call = await Call.findOne({ callId: req.params.callId });
+        if (!call || !call.fiche || call.fiche.length === 0) {
+            return res.status(404).json({ error: 'Aucune fiche trouvée pour cet appel.' });
+        }
+
+        const lastFiche = call.fiche[call.fiche.length - 1];
+        const currentMetadata = lastFiche.metadata || {};
+        const transcriptionText = call.transcript?.txtContent || '';
+        const chatHistory = (call.chat || []).map(msg => ({
+            role: msg.role === 'ai' ? 'assistant' : 'user',
+            content: msg.content
+        }));
+
+        call.chat = call.chat || [];
+        call.chat.push({ role: "user", content: message, date: new Date() });
+
+        const systemPrompt = `Tu es un assistant IA pour Riviera Connection. Tu dois répondre uniquement via l'appel de fonction JSON fourni, sans ajouter d'explication ni de texte. Si la modification est un succès, tu dois impérativement inclure un champ \`updatedMetadata\` représentant les métadonnées finales après modification. Même si un seul champ a changé. Voici les métadonnées actuelles :
+${JSON.stringify(currentMetadata)}
+`;
+
+        const aiResponse = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                { role: "system", content: systemPrompt },
+                ...chatHistory,
+                { role: "user", content: message }
+            ],
+            tools: [{
+                type: "function",
+                function: {
+                    name: "update_metadata",
+                    description: "Répond avec un statut, un message, et éventuellement les métadonnées modifiées",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            status: { type: "string", enum: ["success", "error"] },
+                            message: { type: "string" },
+                            updatedMetadata: { type: "object" }
+                        },
+                        required: ["status", "message"]
+                    }
+                }
+            }],
+            tool_choice: { type: "function", function: { name: "update_metadata" } }
+        });
+
+        const toolCall = aiResponse.choices[0].message.tool_calls?.[0];
+        if (!toolCall || !toolCall.function?.arguments) {
+            throw new Error("L'IA n'a pas retourné de réponse exploitable.");
+        }
+
+        const parsed = JSON.parse(toolCall.function.arguments);
+        console.log(parsed)
+
+        call.chat.push({
+            role: "ai",
+            content: parsed.message,
+            date: new Date()
+        });
+
+        if (parsed.status === 'success' && parsed.updatedMetadata) {
+            const newPdfPath = await generateFichePDF(parsed.updatedMetadata, req.params.callId, transcriptionText);
+            call.fiche.push({
+                pdfPath: newPdfPath,
+                metadata: parsed.updatedMetadata,
+                createdAt: new Date()
+            });
+        }
+
+        await call.save();
+        res.json(call);
+    } catch (err) {
+        console.error('Erreur dans /chat :', err);
+
+        try {
+            const call = await Call.findOne({ callId: req.params.callId });
+            if (call) {
+                call.chat = call.chat || [];
+                call.chat.push({
+                    role: "ai",
+                    content: "Une erreur interne est survenue lors du traitement.",
+                    error: err.message,
+                    date: new Date()
+                });
+                await call.save();
+                return res.status(200).json(call);
+            }
+        } catch (saveErr) {
+            console.error("Erreur lors de la sauvegarde du message d'erreur :", saveErr);
+        }
+
+        res.status(500).json({ error: "Erreur serveur.", detail: err.message });
+    }
+});
 
 export default router

@@ -6,7 +6,7 @@ const openai = new OpenAI({
 
 export async function extractCandidateInfo(transcriptionText) {
     try {
-        const prompt = `Analyser cette transcription d'entretien de casting et extraire les informations structurées suivantes au format JSON, Pas de formatage Makrdown ! :
+        const prompt = `Analyser cette transcription d'entretien de casting et extraire les informations structurées suivantes au format JSON, Pas de formatage Markdown ! :
 
         {
             "identite": {

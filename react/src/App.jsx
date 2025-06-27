@@ -3,18 +3,15 @@ import LoginPage from './pages/LoginPage.jsx'
 import CreateCallPage from './pages/CreateCallPage.jsx'
 import CallPage from './pages/CallPage.jsx'
 import {AuthProvider, useAuth} from "../AuthContext.jsx";
-import HomePageAdmin from "./pages/HomePageAdmin.jsx";
+import HomePage from "./pages/HomePage.jsx";
 
 const AuthenticatedApp = () => {
     const {authStatus} = useAuth();
+    console.log(authStatus)
     return (
         <BrowserRouter>
             <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/create" element={<CreateCallPage />} />
-
-
-                {authStatus === "unauthenticated" ? (
+                {(authStatus === "unauthenticated" || authStatus === "loading") ? (
                     <>
                         {/* Routes publiques */}
                         <Route path="/login" element={<LoginPage/>}/>
@@ -23,7 +20,7 @@ const AuthenticatedApp = () => {
                 ) : (
                     <>
                         {/* Routes privées */}
-                        <Route path="/" element={<HomePageAdmin/>}/>
+                        <Route path="/" element={<HomePage/>}/>
                         <Route path="/create" element={<CreateCallPage />} />
                         <Route path="/room/:callId" element={<CallPage />} />
                     </>
