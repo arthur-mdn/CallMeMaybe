@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import FeatherIcon from "feather-icons-react";
+import {Link} from "react-router-dom";
 
 export default function ConfigEditor() {
     const [configs, setConfigs] = useState([]);
@@ -64,6 +65,9 @@ export default function ConfigEditor() {
                         </button>
                     </div>
                 ))}
+                <Link to={'/logout'} className="special-button fc ai-c jc-c">
+                    <FeatherIcon icon={"log-out"} size={16} className="inline"/>
+                </Link>
             </div>
         </div>
     );
