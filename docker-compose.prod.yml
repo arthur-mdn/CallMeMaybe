@@ -9,6 +9,9 @@ services:
 
   call-server:
     build: ./server
+    volumes:
+      - call-records:/app/records
+      - call-fiche:/app/fiche
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.call-server.rule=Host(`api.call.mds.mondon.pro`)"
@@ -23,4 +26,8 @@ services:
 
 volumes:
   call-mongo-data:
+    driver: local
+  call-records:
+    driver: local
+  call-fiche:
     driver: local
