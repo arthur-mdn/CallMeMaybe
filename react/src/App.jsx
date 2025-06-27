@@ -4,6 +4,7 @@ import CreateCallPage from './pages/CreateCallPage.jsx'
 import CallPage from './pages/CallPage.jsx'
 import {AuthProvider, useAuth} from "../AuthContext.jsx";
 import HomePage from "./pages/HomePage.jsx";
+import Logout from "./pages/Logout.jsx";
 
 const AuthenticatedApp = () => {
     const {authStatus} = useAuth();
@@ -11,6 +12,7 @@ const AuthenticatedApp = () => {
     return (
         <BrowserRouter>
             <Routes>
+                <Route path="/logout" element={<Logout />} />
                 {(authStatus === "unauthenticated" || authStatus === "loading") ? (
                     <>
                         {/* Routes publiques */}
