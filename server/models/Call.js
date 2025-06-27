@@ -39,6 +39,12 @@ const CallSchema = new mongoose.Schema({
     content: { type: String, required: true },
     error: { type: String },
     date: { type: Date, default: Date.now }
+  }],
+  chatRetranscription: [{
+    role: { type: String, enum: ['user', 'ai'], required: true },
+    content: { type: String, required: true },
+    error: { type: String },
+    date: { type: Date, default: Date.now }
   }]
 });
 

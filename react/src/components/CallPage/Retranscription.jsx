@@ -1,8 +1,9 @@
 import {useEffect, useRef, useState} from "react";
 import Share from "./Share.jsx";
 import FeatherIcon from "feather-icons-react";
+import ChatRetranscription from "./ChatRetranscription.jsx";
 
-export default function Retranscription({ callDetails }) {
+export default function Retranscription({ callDetails, setCallDetails }) {
     const [isRetranscriptionOpen, setIsRetranscriptionOpen] = useState(false);
     const retranscriptionRef = useRef();
 
@@ -85,17 +86,43 @@ export default function Retranscription({ callDetails }) {
             {renderTranscript()}
             {isRetranscriptionOpen && (
                 <div ref={retranscriptionRef} className={"modale full"}>
-                    <div className={"box"} style={{position:'relative', maxHeight:'90vh'}}>
+                    <div className={"box"} style={{position: 'relative', maxHeight: '90vh'}}>
                         <h2 className="text-2xl font-bold">Retranscription</h2>
                         <button
                             className="maximize-button"
                             onClick={() => setIsRetranscriptionOpen(false)}
                         >
-                            <FeatherIcon icon="minimize-2" />
+                            <FeatherIcon icon="minimize-2"/>
                         </button>
 
-                        <div style={{overflowY:'scroll'}}>
-                            <p>{callDetails.transcript.txtContent || 'Aucune transcription'}</p>
+
+                        <div className={"fr"} style={{maxHeight: '80vh'}}>
+                            <div style={{width: "70%"}} className={"fc g1"}>
+                                <div style={{overflowY: 'scroll'}}>
+                                    <div style={{overflowY: 'scroll'}}>
+                                        <p>{callDetails.transcript.txtContent || 'Aucune transcription'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className={"fc"} style={{width: '35%', justifyContent: 'flex-end'}}>
+                                <div className={"bot-chat"}>
+                                    <div>
+                                        <img src="/ia-bot.png" alt="IA Bot" style={{width: "4rem", alignSelf: "end", marginBottom: "0", marginRight: '-0.5rem'}}/>
+                                        <div className={"details"}>
+                                            <h3 className="text-xl font-bold">CallMeBot</h3>
+                                            <div className={"status-icon"}>
+                                                <div>
+
+                                                </div>
+                                                <h4>En ligne</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="fc g1 jc-sb" style={{padding: '2rem 0 0rem 2rem', height: '91%'}}>
+                                    <ChatRetranscription callDetails={callDetails} setCallDetails={setCallDetails}/>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
