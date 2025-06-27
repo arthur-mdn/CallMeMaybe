@@ -218,6 +218,18 @@ button:focus-visible {
     border: 2px solid #E8F2F5;
 }
 
+.maximize-button{
+    aspect-ratio: 1/1;
+    width: 2.5rem;
+    padding: 0;
+    border-radius: 10px;
+    background-color: white;
+    border: 2px solid #E8F2F5;
+    position: absolute;
+    right: 1.5rem;
+    top: 1.5rem;
+}
+
 .modale {
     /* background-color: aqua; */
     width: 500px;
@@ -229,6 +241,27 @@ button:focus-visible {
     border: 2px solid #E8F2F5;
 
 }
+
+.modale.full {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 0;
+}
+
+.modale.full .box {
+    margin: 2rem;
+}
+
 #share_link_button{
     aspect-ratio: 1 / 1;
     width: 40px;

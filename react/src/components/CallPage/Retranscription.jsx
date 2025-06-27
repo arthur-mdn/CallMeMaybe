@@ -1,4 +1,21 @@
+import {useEffect, useRef, useState} from "react";
+import Share from "./Share.jsx";
+import FeatherIcon from "feather-icons-react";
+
 export default function Retranscription({ callDetails }) {
+    const [isRetranscriptionOpen, setIsRetranscriptionOpen] = useState(false);
+    const retranscriptionRef = useRef();
+
+    useEffect(() => {
+        function handleClickOutside(e) {
+            if (isRetranscriptionOpen && retranscriptionRef.current && !retranscriptionRef.current.contains(e.target)) {
+                setIsRetranscriptionOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [isRetranscriptionOpen]);
+
     if (!callDetails) {
         return <p className="text-gray-600 italic">Aucune retranscription d'appel disponible.</p>;
     }
@@ -46,7 +63,15 @@ export default function Retranscription({ callDetails }) {
                     <p className="text-gray-600 italic text-center">La restranscription est en cours de traitement...</p>
                 </div>;
             case 'success':
-                return <p>{callDetails.transcript.txtContent || 'Aucune transcription'}</p>;
+                return <>
+                    <button
+                        className="maximize-button"
+                        onClick={() => setIsRetranscriptionOpen(prev => !prev)}
+                    >
+                        <FeatherIcon icon="maximize-2" />
+                    </button>
+                    <p style={{maxHeight:'100%', overflow:'hidden'}}>{callDetails.transcript.txtContent || 'Aucune transcription'}</p>
+                </>;
             case 'error':
                 return <p>❌ Erreur: {callDetails.transcript.error}</p>;
             default:
@@ -55,9 +80,26 @@ export default function Retranscription({ callDetails }) {
     };
 
     return (
-        <div className={`box fc g0-5 jc-fs ${callDetails.endedAt ? "mh300" : ""}`}>
+        <div className={`box fc g0-5 jc-fs ${callDetails.endedAt ? "mh300" : ""}`} style={{position:"relative", maxHeight:'70vh'}}>
             <h2 className="text-2xl font-bold">Retranscription</h2>
             {renderTranscript()}
+            {isRetranscriptionOpen && (
+                <div ref={retranscriptionRef} className={"modale full"}>
+                    <div className={"box"} style={{position:'relative', maxHeight:'90vh'}}>
+                        <h2 className="text-2xl font-bold">Retranscription</h2>
+                        <button
+                            className="maximize-button"
+                            onClick={() => setIsRetranscriptionOpen(false)}
+                        >
+                            <FeatherIcon icon="minimize-2" />
+                        </button>
+
+                        <div style={{overflowY:'scroll'}}>
+                            <p>{callDetails.transcript.txtContent || 'Aucune transcription'}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
