@@ -104,41 +104,43 @@ export default function Fiche({ callDetails, setCallDetails }) {
 
     return (
         <div className={"box jc-fs mw500"} style={{position: 'relative'}}>
-            <button
-                className="maximize-button"
-                onClick={() => setIsFicheOpen(prev => !prev)}
-            >
-                <FeatherIcon icon="maximize-2"/>
-            </button>
             {latestFiche ? (
-                <div className="fc g0-5">
-                    <h2 className="text-2xl font-bold">Fiche client</h2>
-                    <div>
-                        {isIOS ? (
-                            <a
-                                href={`${import.meta.env.VITE_API_URL}/${latestFiche.pdfPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ display: 'inline-block', marginTop: '1rem' }}
-                            >
-                                📄 Voir le PDF
-                            </a>
-                        ) : (
-                            <embed
-                                src={`${import.meta.env.VITE_API_URL}/${latestFiche.pdfPath}`}
-                                title={latestFiche.pdfPath}
-                                type="application/pdf"
-                                style={{ width: "100%", height: "800px", backgroundColor: "lightslategrey", borderRadius: "0.5rem" }}
-                            />
-                        )}
-                        <p><strong>Créé le:</strong> {new Date(latestFiche.createdAt).toLocaleString()}</p>
+                <>
+                    <button
+                        className="maximize-button"
+                        onClick={() => setIsFicheOpen(prev => !prev)}
+                    >
+                        <FeatherIcon icon="maximize-2"/>
+                    </button>
+                    <div className="fc g0-5">
+                        <h2 className="text-2xl font-bold">Fiche client</h2>
+                        <div>
+                            {isIOS ? (
+                                <a
+                                    href={`${import.meta.env.VITE_API_URL}/${latestFiche.pdfPath}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{display: 'inline-block', marginTop: '1rem'}}
+                                >
+                                    📄 Voir le PDF
+                                </a>
+                            ) : (
+                                <embed
+                                    src={`${import.meta.env.VITE_API_URL}/${latestFiche.pdfPath}`}
+                                    title={latestFiche.pdfPath}
+                                    type="application/pdf"
+                                    style={{width: "100%", height: "800px", backgroundColor: "lightslategrey", borderRadius: "0.5rem"}}
+                                />
+                            )}
+                            <p><strong>Créé le:</strong> {new Date(latestFiche.createdAt).toLocaleString()}</p>
+                        </div>
                     </div>
-                </div>
+                </>
             ) : (
                 <>
                     <h2 className="text-2xl font-bold">Fiche client</h2>
                     <div className="fc ai-c g1 h100 jc-c">
-                        <PrimaryLoader />
+                        <PrimaryLoader/>
                         <p className="text-gray-600 italic">La fiche client est en cours de génération...</p>
                     </div>
                 </>
