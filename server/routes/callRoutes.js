@@ -15,6 +15,12 @@ import { generateFichePDF } from '../services/pdfGenerationService.js';
 import { extractCandidateInfo } from '../services/ficheExtractionService.js';
 import config from '../config.js'
 
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+});
+
 import fs from 'fs/promises';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegPath from 'ffmpeg-static';
@@ -218,6 +224,108 @@ router.put('/:callId/audio', verifyToken, upload.single('audio'), async (req, re
     } catch (err) {
         res.status(500).json({ error: 'Erreur lors de l\'enregistrement de l\'audio',savedAudioPath: req.file?.filename})
     }
-})
+});
+
+router.post('/:callId/chat', verifyToken, async (req, res) => {
+    try {
+        const { message } = req.body;
+        if (!message || typeof message !== 'string') {
+            return res.status(400).json({ error: 'Message invalide' });
+        }
+
+        const call = await Call.findOne({ callId: req.params.callId });
+        if (!call || !call.fiche || call.fiche.length === 0) {
+            return res.status(404).json({ error: 'Aucune fiche trouvée pour cet appel.' });
+        }
+
+        const lastFiche = call.fiche[call.fiche.length - 1];
+        const currentMetadata = lastFiche.metadata || {};
+        const transcriptionText = call.transcript?.txtContent || '';
+        const chatHistory = (call.chat || []).map(msg => ({
+            role: msg.role === 'ai' ? 'assistant' : 'user',
+            content: msg.content
+        }));
+
+        call.chat = call.chat || [];
+        call.chat.push({ role: "user", content: message, date: new Date() });
+
+        const systemPrompt = `Tu es un assistant IA pour Riviera Connection. Tu dois répondre uniquement via l'appel de fonction JSON fourni, sans ajouter d'explication ni de texte. Si la modification est un succès, tu dois impérativement inclure un champ \`updatedMetadata\` représentant les métadonnées finales après modification. Même si un seul champ a changé. Voici les métadonnées actuelles :
+${JSON.stringify(currentMetadata)}
+`;
+
+        const aiResponse = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                { role: "system", content: systemPrompt },
+                ...chatHistory,
+                { role: "user", content: message }
+            ],
+            tools: [{
+                type: "function",
+                function: {
+                    name: "update_metadata",
+                    description: "Répond avec un statut, un message, et éventuellement les métadonnées modifiées",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            status: { type: "string", enum: ["success", "error"] },
+                            message: { type: "string" },
+                            updatedMetadata: { type: "object" }
+                        },
+                        required: ["status", "message"]
+                    }
+                }
+            }],
+            tool_choice: { type: "function", function: { name: "update_metadata" } }
+        });
+
+        const toolCall = aiResponse.choices[0].message.tool_calls?.[0];
+        if (!toolCall || !toolCall.function?.arguments) {
+            throw new Error("L'IA n'a pas retourné de réponse exploitable.");
+        }
+
+        const parsed = JSON.parse(toolCall.function.arguments);
+        console.log(parsed)
+
+        call.chat.push({
+            role: "ai",
+            content: parsed.message,
+            date: new Date()
+        });
+
+        if (parsed.status === 'success' && parsed.updatedMetadata) {
+            const newPdfPath = await generateFichePDF(parsed.updatedMetadata, req.params.callId, transcriptionText);
+            call.fiche.push({
+                pdfPath: newPdfPath,
+                metadata: parsed.updatedMetadata,
+                createdAt: new Date()
+            });
+        }
+
+        await call.save();
+        res.json(call);
+    } catch (err) {
+        console.error('Erreur dans /chat :', err);
+
+        try {
+            const call = await Call.findOne({ callId: req.params.callId });
+            if (call) {
+                call.chat = call.chat || [];
+                call.chat.push({
+                    role: "ai",
+                    content: "Une erreur interne est survenue lors du traitement.",
+                    error: err.message,
+                    date: new Date()
+                });
+                await call.save();
+                return res.status(200).json(call);
+            }
+        } catch (saveErr) {
+            console.error("Erreur lors de la sauvegarde du message d'erreur :", saveErr);
+        }
+
+        res.status(500).json({ error: "Erreur serveur.", detail: err.message });
+    }
+});
 
 export default router

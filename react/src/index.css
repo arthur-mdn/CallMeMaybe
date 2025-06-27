@@ -69,6 +69,11 @@ button {
 button:hover {
   border-color: #646cff;
 }
+button:disabled {
+    background-color: #c5cdd1;
+    color: #A0A0A0;
+    cursor: not-allowed;
+}
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
@@ -210,12 +215,14 @@ button:focus-visible {
 }
 
 .special-button{
-    aspect-ratio: 1/1;
     width: 3.5rem;
+    height: 3.5rem;
     padding: 0;
     border-radius: 50px;
     background-color: white;
     border: 2px solid #E8F2F5;
+    flex-grow: 0;
+    flex-shrink: 0;
 }
 
 .maximize-button{
@@ -418,3 +425,109 @@ button.call.end{
     background-color: #000;
     transition: 300ms ease-out all;
 }
+
+.chat-history .chat-msg {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    max-width: 80%;
+}
+
+
+.chat-history {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.chat-history .chat-msg.assistant, .chat-history .chat-msg.ai  {
+    background-color: #E8F2F5;
+}
+.chat-history .chat-msg.user {
+    margin-left: auto;
+    background-color: #397A99;
+    color: white;
+}
+.no-padding{
+    padding: 0!important;
+}
+.dots-loader {
+    width: 55px;
+    height: 30px;
+    background-color: #E8F2F5;
+    border-radius: 15px;
+    padding: 0 10px 8px;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+}
+.dots-loader .dot {
+    display: inline-block;
+    background-color: #90949c;
+    border-radius: 50%;
+    width: 7px;
+    height: 7px;
+    animation: jump 1.5s linear infinite;
+}
+.dots-loader .dot:nth-of-type(2) {
+    animation-delay: 0.1s;
+}
+.dots-loader .dot:nth-of-type(3) {
+    animation-delay: 0.2s;
+}
+@keyframes jump {
+    0% {
+        transform: translateY(0);
+    }
+    18% {
+        transform: translateY(-7px);
+    }
+    36%, 100% {
+        transform: translateY(0px);
+    }
+}
+
+.bot-chat{
+    padding: 0 0 2rem 2rem;
+ width: 100%;
+    height: 70px;
+}
+
+
+.bot-chat > div{
+    padding: 0.8rem;
+    border-radius: 0.5rem;
+    width: 100%;
+    height: 70px;
+    background-color: #e0e0e0;
+    overflow: hidden;
+    position: relative;
+}
+
+.bot-chat div .details{
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 0.5rem 0.5rem 0.5rem 5.5rem;
+}
+
+
+.bot-chat div .details .status-icon div{
+    width: 10px;
+    height: 10px;
+    background-color: #73BF7F;
+    border-radius: 10px;
+}
+
+.bot-chat div .details .status-icon{
+    display: flex;
+     align-items: center;
+    gap: 0.5rem;
+    color: #73BF7F;
+    font-weight: bold;
+}
+
+
+

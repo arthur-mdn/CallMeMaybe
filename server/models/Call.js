@@ -34,6 +34,12 @@ const CallSchema = new mongoose.Schema({
     }
   }],
   participants: [{ type: String }],
+  chat: [{
+    role: { type: String, enum: ['user', 'ai'], required: true },
+    content: { type: String, required: true },
+    error: { type: String },
+    date: { type: Date, default: Date.now }
+  }]
 });
 
 export default mongoose.model("Call", CallSchema);
