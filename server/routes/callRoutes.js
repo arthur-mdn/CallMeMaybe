@@ -354,11 +354,28 @@ router.post('/:callId/chat-transcript', verifyToken, async (req, res) => {
             date: new Date()
         });
 
-        const systemPrompt = `Tu es un assistant IA qui répond à des questions basées sur cette retranscription d’appel :
+        const chatFiche = (call.chat || []).map(msg => ({
+            role: msg.role === 'ai' ? 'assistant' : 'user',
+            content: msg.content
+        }));
 
+        const systemPrompt = `Tu es un assistant IA qui répond à des questions sur un appel téléphonique.
+
+Tu as accès à deux sources d'information :
+1. La **retranscription brute** de l'appel.
+2. Un **historique des échanges** entre l'utilisateur et un autre agent IA, servant à modifier la fiche du candidat.
+
+Utilise d'abord la retranscription comme source principale. Si l'information n'y figure pas, tu peux t'appuyer sur les échanges de la fiche pour émettre une hypothèse, et **tu dois le préciser clairement**.
+
+⚠️ Si l’utilisateur te demande de **modifier une information**, **ne le fais pas**. Indique-lui simplement que cela doit être fait via la **fiche client**, avec l'autre assistant IA prévu à cet effet.
+
+Retranscription de l’appel :
 """${transcript}"""
 
-Réponds toujours de manière concise, claire et fidèle à ce qui est dit.`;
+Historique des échanges sur la fiche :
+${JSON.stringify(chatFiche, null, 2)}
+
+Réponds de manière claire, concise et sourcée.`;
 
         const response = await openai.chat.completions.create({
             model: "gpt-4o",
