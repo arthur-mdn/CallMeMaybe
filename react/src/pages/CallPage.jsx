@@ -331,7 +331,7 @@ export default function CallPage() {
                                     localStream={localStream}
                                     remoteStreams={remoteStreams}
                                 />
-                                <Retranscription callDetails={callDetails}/>
+                                <Retranscription callDetails={callDetails} setCallDetails={setCallDetails}/>
                             </div>
                         )}
                         {(callDetails && callDetails.endedAt) && (
@@ -339,7 +339,7 @@ export default function CallPage() {
                                 <Fiche callDetails={callDetails} setCallDetails={setCallDetails}/>
                                 <div className={"fc g1 "}>
                                     <Enregistrement callDetails={callDetails}/>
-                                    <Retranscription callDetails={callDetails}/>
+                                    <Retranscription callDetails={callDetails} setCallDetails={setCallDetails}/>
                                 </div>
                             </div>
                         )}

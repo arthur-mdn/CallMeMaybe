@@ -328,4 +328,62 @@ ${JSON.stringify(currentMetadata)}
     }
 });
 
+router.post('/:callId/chat-transcript', verifyToken, async (req, res) => {
+    try {
+        const { message } = req.body;
+        if (!message || typeof message !== 'string') {
+            return res.status(400).json({ error: 'Message invalide' });
+        }
+
+        const call = await Call.findOne({ callId: req.params.callId });
+        if (!call || !call.transcript || !call.transcript.txtContent) {
+            return res.status(404).json({ error: 'Aucune retranscription trouvée.' });
+        }
+
+        const transcript = call.transcript.txtContent;
+
+        const history = (call.chatRetranscription || []).map(msg => ({
+            role: msg.role === 'ai' ? 'assistant' : 'user',
+            content: msg.content
+        }));
+
+        call.chatRetranscription = call.chatRetranscription || [];
+        call.chatRetranscription.push({
+            role: "user",
+            content: message,
+            date: new Date()
+        });
+
+        const systemPrompt = `Tu es un assistant IA qui répond à des questions basées sur cette retranscription d’appel :
+
+"""${transcript}"""
+
+Réponds toujours de manière concise, claire et fidèle à ce qui est dit.`;
+
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                { role: "system", content: systemPrompt },
+                ...history,
+                { role: "user", content: message }
+            ],
+            temperature: 0.2
+        });
+
+        const reply = response.choices[0].message.content;
+
+        call.chatRetranscription.push({
+            role: "ai",
+            content: reply,
+            date: new Date()
+        });
+
+        await call.save();
+        res.json(call);
+    } catch (err) {
+        console.error('Erreur dans /chat-transcript :', err);
+        res.status(500).json({ error: "Erreur serveur." });
+    }
+});
+
 export default router
