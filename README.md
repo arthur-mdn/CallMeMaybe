@@ -78,13 +78,13 @@ OPENAI_API_KEY=sk-...
 ### 1. Construction de l’image
 
 ```bash
-docker-compose build
+docker compose build
 ```
 
 ### 2. Démarrage du projet
 
 ```bash
-docker-compose up
+docker compose up
 ```
 
 L'application sera accessible sur :  
