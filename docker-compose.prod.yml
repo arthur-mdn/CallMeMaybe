@@ -1,33 +1,36 @@
 services:
-  call-react:
+  callmemaybe-react:
+    container_name: callmemaybe-react
     build: ./react
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.call-react.rule=Host(`call.mds.mondon.pro`)"
-      - "traefik.http.routers.call-react.entrypoints=websecure"
-      - "traefik.http.routers.call-react.tls.certresolver=myresolver"
+      - "traefik.http.routers.callmemaybe-react.rule=Host(`call.mds.mondon.pro`)"
+      - "traefik.http.routers.callmemaybe-react.entrypoints=websecure"
+      - "traefik.http.routers.callmemaybe-react.tls.certresolver=myresolver"
 
-  call-server:
+  callmemaybe-server:
+    container_name: callmemaybe-server
     build: ./server
     volumes:
-      - call-records:/app/records
-      - call-fiche:/app/fiche
+      - callmemaybe-records:/app/records
+      - callmemaybe-fiche:/app/fiche
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.call-server.rule=Host(`api.call.mds.mondon.pro`)"
-      - "traefik.http.services.call-server.loadbalancer.server.port=3003"
-      - "traefik.http.routers.call-server.entrypoints=websecure"
-      - "traefik.http.routers.call-server.tls.certresolver=myresolver"
+      - "traefik.http.routers.callmemaybe-server.rule=Host(`api.call.mds.mondon.pro`)"
+      - "traefik.http.services.callmemaybe-server.loadbalancer.server.port=3003"
+      - "traefik.http.routers.callmemaybe-server.entrypoints=websecure"
+      - "traefik.http.routers.callmemaybe-server.tls.certresolver=myresolver"
 
-  call-mongo:
+  callmemaybe-mongo:
+    container_name: callmemaybe-mongo
     image: mongo:latest
     volumes:
-      - call-mongo-data:/data/db
+      - callmemaybe-mongo-data:/data/db
 
 volumes:
-  call-mongo-data:
+  callmemaybe-mongo-data:
     driver: local
-  call-records:
+  callmemaybe-records:
     driver: local
-  call-fiche:
+  callmemaybe-fiche:
     driver: local
