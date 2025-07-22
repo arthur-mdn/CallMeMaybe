@@ -6,7 +6,7 @@
 
 ## 🚀 Fonctionnalités
 
-- Appels audio avec [LiveKit](https://livekit.io/)
+- Appels audio avec WebSocket et WebRTC
 - Enregistrement et upload du fichier audio
 - Transcription automatique via Whisper API
 - Génération de fiche candidat via GPT-4
@@ -18,15 +18,15 @@
 
 ## 🛠️ Stack technique
 
-| Type            | Technologie                                |
-|-----------------|---------------------------------------------|
-| Framework       | Next.js (App Router)                        |
-| Audio temps réel| LiveKit                                     |
-| Enregistrement  | MediaRecorder API (navigateur)              |
-| Transcription   | OpenAI Whisper API                          |
-| IA Profil       | OpenAI GPT-4 API                            |
-| PDF             | [pdf-lib](https://pdf-lib.js.org/)          |
-| Conteneurisation| Docker / Docker Compose                     |
+| Type            | Technologie                        |
+|-----------------|------------------------------------|
+| Framework       | Next.js (App Router)               |
+| Audio temps réel| WebSockets + WebRTC                |
+| Enregistrement  | MediaRecorder API (navigateur)     |
+| Transcription   | OpenAI Whisper API                 |
+| IA Profil       | OpenAI GPT-4 API                   |
+| PDF             | [pdf-lib](https://pdf-lib.js.org/) |
+| Conteneurisation| Docker / Docker Compose            |
 
 ---
 
@@ -53,8 +53,8 @@ callmemaybe/
 ### 1. Cloner le dépôt
 
 ```bash
-git clone https://github.com/votre-utilisateur/callmemaybe.git
-cd callmemaybe
+https://github.com/arthur-mdn/CallMeMaybe.git
+cd CallMeMaybe
 ```
 
 ### 2. Variables d’environnement
@@ -62,7 +62,7 @@ cd callmemaybe
 Copiez le fichier d'exemple :
 
 ```bash
-cp .env.local.example .env.local
+cp .env.template .env
 ```
 
 Puis remplissez avec vos clés :
@@ -88,7 +88,7 @@ docker compose up
 ```
 
 L'application sera accessible sur :  
-👉 http://localhost:3000
+👉 http://localhost:5174
 
 ---
 
