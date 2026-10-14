@@ -1,12 +1,15 @@
 FROM node:18-alpine
+
+RUN apk add --no-cache ffmpeg
+
 WORKDIR /app
 
 COPY package*.json ./
 RUN npm ci --omit=dev
-RUN npm install -g nodemon
 
 COPY . .
 
 ENV NODE_ENV=production
-EXPOSE 3001
+ENV FFMPEG_PATH=/usr/bin/ffmpeg
+EXPOSE 3003
 CMD ["node", "server.js"]

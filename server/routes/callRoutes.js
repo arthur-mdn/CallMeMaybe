@@ -23,10 +23,21 @@ const openai = new OpenAI({
 });
 
 import fs from 'fs/promises';
+import { execFileSync } from 'child_process';
 import ffmpeg from 'fluent-ffmpeg';
-import ffmpegPath from 'ffmpeg-static';
+import ffmpegStaticPath from 'ffmpeg-static';
 
-ffmpeg.setFfmpegPath(ffmpegPath);
+const resolveFfmpegPath = () => {
+    if (process.env.FFMPEG_PATH) return process.env.FFMPEG_PATH;
+    try {
+        execFileSync('ffmpeg', ['-version'], { stdio: 'ignore' });
+        return 'ffmpeg';
+    } catch {
+        return ffmpegStaticPath;
+    }
+};
+
+ffmpeg.setFfmpegPath(resolveFfmpegPath());
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)

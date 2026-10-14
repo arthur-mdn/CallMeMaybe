@@ -12,6 +12,8 @@ services:
       - "5174:5174"
     depends_on:
       - callmemaybe-server
+    networks:
+      - callmemaybe
 
   callmemaybe-server:
     container_name: callmemaybe-server
@@ -31,6 +33,8 @@ services:
     depends_on:
       callmemaybe-mongo:
         condition: service_healthy
+    networks:
+      - callmemaybe
 
   callmemaybe-mongo:
     container_name: callmemaybe-mongo
@@ -44,6 +48,13 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - callmemaybe
+
+networks:
+  callmemaybe:
+    name: callmemaybe_net
+    driver: bridge
 
 volumes:
   callmemaybe-mongo-data:
