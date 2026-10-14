@@ -17,7 +17,7 @@ services:
     container_name: callmemaybe-server
     build:
       context: ./server
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     command: sh -c "npm install && nodemon server.js"
     volumes:
       - ./server:/app
