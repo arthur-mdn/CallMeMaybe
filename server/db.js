@@ -3,7 +3,7 @@ import config from './config.js'
 
 console.log(config)
 
-mongoose.connect(config.dbUri, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(config.dbUri);
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'Erreur de connexion MongoDB:'));

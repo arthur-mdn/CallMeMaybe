@@ -1,6 +1,5 @@
 import express from 'express'
 import Call from '../models/Call.js'
-import Config from '../models/Config.js'
 import {verifyToken} from "../authMiddleware.js";
 import { v4 as uuidv4 } from 'uuid' 
 
@@ -14,11 +13,6 @@ import mockTranscript from '../services/mockTranscriptService.js';
 import { generateMetadata } from '../services/aiMetadataService.js';
 import { generateFichePDF } from '../services/pdfGenerationService.js';
 import { extractCandidateInfo } from '../services/ficheExtractionService.js';
-await Config.updateOne(
-    { key: 'USE_MOCK_TRANSCRIPT' },
-    { $set: { value: true } },
-    { upsert: true }
-);
 import { loadConfig } from '../services/configService.js';
 
 

@@ -24,10 +24,13 @@ services:
       - callmemaybe-server-node-modules:/app/node_modules
     ports:
       - "3003:3003"
+    env_file:
+      - ./server/.env
     environment:
       - NODE_ENV=development
     depends_on:
-      - callmemaybe-mongo
+      callmemaybe-mongo:
+        condition: service_healthy
 
   callmemaybe-mongo:
     container_name: callmemaybe-mongo
@@ -36,6 +39,11 @@ services:
       - callmemaybe-mongo-data:/data/db
     ports:
       - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   callmemaybe-mongo-data:

@@ -31,31 +31,20 @@ app.use(cors((req, callback) => {
     callback(null, corsOptions);
 }));
 
-app.use(cookieParser({
-    sameSite: 'none',
-    secure: true
-}));
+app.use(cookieParser());
 
 app.use(express.json())
 
 app.use(express.static('fiche'));
 app.use(express.static('records'));
 
-// Connexion MongoDB
-db.once('open', function () {
-
-    const PORT = config.port || 5001;
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-});
-
-// Initialiser la socket
 initSocket(io)
 
-// Routes API
 app.use('/api/auth', authRoutes)
 app.use('/api/calls', callRoutes)
 app.use('/api/config', configRoutes)
 
-server.listen(process.env.PORT || 5001, () => {
-    console.log('Serveur en ligne')
-})
+db.once('open', function () {
+    const PORT = config.port || 5001;
+    server.listen(PORT, '0.0.0.0', () => console.log(`Serveur en ligne sur le port ${PORT}`));
+});
